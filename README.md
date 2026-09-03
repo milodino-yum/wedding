@@ -26,6 +26,22 @@ python3 -m http.server 8000
 The room boundary is a polygon traced from the PDF (deck edge, garden, curved walkway
 and the lower lawn). Objects are clamped so their footprint, chairs included, stays inside it.
 
+### Site features (from the venue photos)
+
+Toggled with the **Site** checkbox. They are context, not placeable objects:
+
+- Main lodge (three storeys, red roof) with the vine-covered porch face and the raised,
+  railed **lodge deck** with its two stair notches where the PDF draws them.
+- The **covered porch** that runs along the curved walkway: wall on the PDF's outer line,
+  posts on the open edge, translucent roof (cocktail tables can sit under it).
+- The asphalt **path** beside the porch and the **flower bed** on its lawn side, plus the
+  hydrangea bed along the deck. Both beds are no-go zones: objects cannot be placed on them.
+- The single-storey **dining wing** behind the porch.
+
+Depths and heights are estimates from the photos; the PDF gives the positions. Mature
+trees are regular palette objects (footprint = trunk only) so you can move them to where
+the trees really are; the example layout drops seven at guessed spots.
+
 ## Controls
 
 | Action | How |
@@ -51,7 +67,8 @@ for dining tables. Chairs are auto-arranged around dining tables and follow the 
 - **Save JSON / Load JSON** download or upload the layout as a file.
 - **Export PNG** renders a straight-down orthographic image of the whole venue.
 - **Load example** recreates the sample layout drawn in the venue's PDF (8 rounds, three
-  rows of 8' banquet tables, bar + back bar, cocktail tables, uplights and lanterns).
+  rows of 8' banquet tables, bar + back bar, cocktail tables, uplights, lanterns, the eight
+  coloured Adirondack chairs and approximate tree positions).
 
 ## Rebuilding the vendor bundle
 
