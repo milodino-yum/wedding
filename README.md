@@ -31,16 +31,19 @@ and the lower lawn). Objects are clamped so their footprint, chairs included, st
 Toggled with the **Site** checkbox. They are context, not placeable objects:
 
 - Main lodge (three storeys, red roof) with the vine-covered porch face and the raised,
-  railed **lodge deck** with its two stair notches where the PDF draws them.
-- The **covered porch** that runs along the curved walkway: wall on the PDF's outer line,
-  posts on the open edge, translucent roof (cocktail tables can sit under it).
-- The asphalt **path** beside the porch and the **flower bed** on its lawn side, plus the
-  hydrangea bed along the deck. Both beds are no-go zones: objects cannot be placed on them.
-- The single-storey **dining wing** behind the porch.
+  railed **lodge deck** with its two stair notches where the PDF draws them. A path runs
+  along the foot of the deck and joins the terrace.
+- The single-storey **dining wing** with its curved roof. Its **porch** is the roof
+  overhang: posts stand on the PDF's walkway line and the wall is about 10 ft behind them.
+- The paved **terrace** along the posts (where the venue's own drawing puts cocktail
+  tables), and the oval **flower bed** on the lawn side of it, running only along the
+  pavilion. A small hydrangea bed sits in front of the enclosed porch. Both beds are
+  no-go zones: objects cannot be placed on them.
+- The shrub bank along the lake-view edge and the lake beyond it, for orientation.
 
 Depths and heights are estimates from the photos; the PDF gives the positions. Mature
 trees are regular palette objects (footprint = trunk only) so you can move them to where
-the trees really are; the example layout drops seven at guessed spots.
+the trees really are; the example layout drops seven at approximate spots.
 
 ## Controls
 
@@ -59,7 +62,8 @@ the trees really are; the example layout drops seven at guessed spots.
 The right panel shows the selected object's label, position (feet from the plan's top-left
 corner), rotation (degrees, clockwise from above), dimensions (editable for bars, buffets,
 dance floor, stage, DJ booth, lounge pieces, trees, arch and custom boxes) and seat count
-for dining tables. Chairs are auto-arranged around dining tables and follow the seat count.
+for dining tables and ceremony rows. Chairs are auto-arranged around dining tables and follow the
+seat count; a ceremony chair row grows with its seat count and is tallied separately.
 
 ## Saving
 

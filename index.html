@@ -242,11 +242,14 @@ const CATALOG = {
     build(g, p) { g.add(cyl(p.w / 2, 0.1, M(COL.linen), 0, p.h - 0.1)); g.add(cyl(0.12, p.h - 0.1, M(0x777777))); g.add(cyl(1, 0.08, M(0x777777))); } },
   chair:    { group: 'seating', name: 'Chair', sw: COL.chair, w: CHAIR.w, d: CHAIR.d, h: CHAIR.h, seats: 1, seatFixed: true,
     build(g) { g.add(chairMesh(M(COL.chair))); } },
+  cerrow:   { group: 'seating', name: 'Ceremony chair row', sw: 0xffffff, w: 18, d: 1.5, h: 3, seats: 10, maxSeats: 20, ceremony: true,
+    build(g, p) { const n = Math.max(1, p.seats), m = M(0xffffff); for (let i = 0; i < n; i++) { const c = chairMesh(m); c.position.x = -n * 0.9 + 1.8 * (i + 0.5); g.add(c); } },
+    extent: p => [Math.max(1, p.seats) * 1.8, 1.6] },
   sofa:     { group: 'seating', name: 'Sofa', sw: COL.sofa, w: 7, d: 3, h: 2.75, resizable: true,
     build(g, p) { const m = M(COL.sofa); g.add(box(p.w, 1.4, p.d, m)); g.add(box(p.w, p.h - 1.4, 0.7, m, 0, 1.4, -p.d / 2 + 0.35)); g.add(box(0.6, 0.6, p.d - 0.7, m, -p.w / 2 + 0.3, 1.4, 0.35)); g.add(box(0.6, 0.6, p.d - 0.7, m, p.w / 2 - 0.3, 1.4, 0.35)); } },
   armchair: { group: 'seating', name: 'Armchair', sw: COL.sofa, w: 3, d: 3, h: 2.75, resizable: true,
     build(g, p) { CATALOG.sofa.build(g, p); } },
-  adirondack: { group: 'seating', name: 'Adirondack chair', sw: 0x2f9dc4, w: 2.6, d: 3, h: 3.2, colorCycle: [0x2f9dc4, 0xe8c531, 0xd63a2f, 0x3aa886],
+  adirondack: { group: 'seating', name: 'Adirondack chair', sw: 0x2f9dc4, w: 2.6, d: 3, h: 3.2, colorCycle: [0x2f9dc4, 0xe8c531, 0xd63a2f, 0x3f8f3f, 0x3aa886],
     build(g, p) { const m = M(p.color || 0x2f9dc4);
       const seat = box(2.4, 0.15, 2.2, m, 0, 1.0, 0.2); seat.rotation.x = 0.15; g.add(seat);
       const back = box(2.4, 2.6, 0.15, m, 0, 0.7, -1.1); back.rotation.x = -0.3; g.add(back);
@@ -358,15 +361,18 @@ function offsetLine(pts, dist) {
   return pts.map((p, i) => {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
     let tx = b[0] - a[0], ty = b[1] - a[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
-    return [p[0] + ty * dist, p[1] - tx * dist]; // normal toward the lawn
+    const d = typeof dist === 'function' ? dist(i, pts.length) : dist;
+    return [p[0] + ty * d, p[1] - tx * d]; // normal toward the lawn (right-hand side of the line's direction)
   });
 }
-const PORCH_DEPTH = 10, PATH_W = 6, BED_W = 7;
+const PORCH_DEPTH = 10, TERRACE_W = 10, BED_OFF = 16;
+// Porch posts: the small squares the PDF draws on the walkway line, plus a few to bridge gaps.
 const POST_LINE = [[7.8, 144.9], [17.8, 153], [26.7, 160.3], [34.6, 168.1], [43.5, 179.5], [51.8, 193.6], [56.7, 204.7], [59.9, 215.8], [63.2, 228.2], [64, 245], [63.8, 258], [61.6, 270]];
 const bedArc = ARC.filter(p => p[1] > 148 && p[1] < 232);
+const bedWidth = (i, n) => 3 + 10 * Math.sin(Math.PI * (i + 0.5) / n); // oval bed, widest mid-way along the porch
 const NOGO = [
-  { name: 'Hydrangea bed', poly: [[19.5, 0.3], [24.5, 0.3], [24.5, 130], [19.5, 130]], colors: [0xe4ead2, 0xd7e3c0, 0xcfd8e8] },
-  { name: 'Flower bed', poly: [...offsetLine(bedArc, PORCH_DEPTH + PATH_W), ...offsetLine(bedArc, PORCH_DEPTH + PATH_W + BED_W).reverse()], colors: [0xf2c14e, 0xe76f51, 0xd45087, 0xf4a261, 0xf9d949] },
+  { name: 'Hydrangea bed', poly: [[6.3, 106], [10.3, 106], [10.3, 131], [6.3, 131]], colors: [0xe4ead2, 0xd7e3c0, 0xcfd8e8] },
+  { name: 'Flower bed', poly: [...offsetLine(bedArc, BED_OFF), ...offsetLine(bedArc, (i, n) => BED_OFF + bedWidth(i, n)).reverse()], colors: [0xf2c14e, 0xe76f51, 0xd45087, 0xf4a261, 0xf9d949] },
 ];
 function pointInPoly(poly, px, pz) {
   let inside = false;
@@ -389,7 +395,7 @@ function buildSite() {
   // Main lodge (three storeys) behind the deck, single-storey wing around the corner and behind the covered porch.
   site.add(box(40, 34, 81, white, -14, 0, 34.5)); site.add(box(42, 5, 83, red, -14, 34, 34.5));
   site.add(box(40, 14, 62, white, -14, 0, 106)); site.add(box(42, 3, 64, red, -14, 14, 106));
-  const wingBack = [...offsetLine(ARC, -1), ...offsetLine(ARC, -30).reverse()];
+  const wingBack = [...offsetLine(ARC, -PORCH_DEPTH - 1), ...offsetLine(ARC, -40).reverse()];
   site.add(extrudePoly(wingBack, 14, white)); site.add(extrudePoly(wingBack, 3, red, 14));
   site.add(box(1.2, 13, 75, vine, 6.6, 0, 37.5)); // vine-covered porch face
   // Raised deck with railing; the two stair notches are where the PDF draws them.
@@ -399,25 +405,33 @@ function buildSite() {
   for (let z = 0.5; z <= 105; z += 6) { if (stairs.some(([a, b]) => z > a - 1 && z < b + 1)) continue; site.add(box(0.3, 3.2, 0.3, rail, 19.2, 2.5, z)); }
   for (const [a, b] of deckSegs) site.add(box(0.25, 0.25, b - a, rail, 19.2, 5.5, (a + b) / 2));
   site.add(box(13.5, 0.25, 0.25, rail, 12.75, 5.5, 0.3)); site.add(box(13.5, 0.25, 0.25, rail, 12.75, 5.5, 105));
-  // Covered porch along the walkway: wall on the PDF's outer line, posts on the open edge, translucent roof so the top-down view stays readable.
-  site.add(extrudePoly([...ARC, ...offsetLine(ARC, -1).reverse()], 11, white));
-  site.add(extrudePoly([...offsetLine(ARC, -1), ...offsetLine(ARC, PORCH_DEPTH + 0.5).reverse()], 0.8, M(0x8a8a8a, { transparent: true, opacity: 0.35, depthWrite: false }), 10.5));
-  offsetLine(POST_LINE, PORCH_DEPTH - 0.5).forEach(([x, z]) => site.add(box(0.8, 10.5, 0.8, rail, x, 0, z)));
-  // Asphalt path on the lawn side of the porch.
-  site.add(flatPoly([...offsetLine(ARC, PORCH_DEPTH), ...offsetLine(ARC, PORCH_DEPTH + PATH_W).reverse()], asphalt, 0.012));
+  // Dining-wing porch: the roof overhang with posts on the PDF's walkway line; wall and windows 10 ft behind the posts.
+  site.add(extrudePoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, -PORCH_DEPTH - 1).reverse()], 11, white));
+  site.add(extrudePoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, 0.6).reverse()], 0.8, red, 10.5));
+  site.add(flatPoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, 0).reverse()], deckMat, 0.3));
+  offsetLine(POST_LINE, -0.5).forEach(([x, z]) => site.add(box(0.8, 10.5, 0.8, rail, x, 0, z)));
+  // Paved terrace along the posts, and the path that runs along the foot of the lodge deck to meet it.
+  const P10 = offsetLine(ARC, TERRACE_W);
+  site.add(flatPoly([...ARC, ...P10.reverse()], asphalt, 0.012));
+  site.add(flatPoly([[19.5, 0.3], [24.5, 0.3], [24.5, 131], offsetLine(ARC, TERRACE_W)[1], offsetLine(ARC, TERRACE_W)[0]], asphalt, 0.012));
+  // Lake beyond the tree line, and the shrub bank along the lake-view edge.
+  const lake = new THREE.Mesh(new THREE.PlaneGeometry(200, 420), M(0x6f9fc0, { roughness: 0.3 })); lake.rotation.x = -Math.PI / 2; lake.position.set(290, -0.1, 140); site.add(lake);
+  const lakeEdge = ROOM.slice(0, 7);
+  site.add(extrudePoly([...offsetLine(lakeEdge, 0.5), ...offsetLine(lakeEdge, 14).reverse()], 3.5, M(0x3d6e33)));
+  siteLabel('Lake (approx.)', 260, 6, 140, 1.2);
   // Planting beds (also no-go zones for placement).
   for (const n of NOGO) {
     site.add(extrudePoly(n.poly, 1.1, soil));
     const cx = n.poly.reduce((a, p) => a + p[0], 0) / n.poly.length;
-    const pts = n.name === 'Hydrangea bed' ? Array.from({ length: 30 }, (_, i) => [22, 2.5 + i * 4.3]) : offsetLine(bedArc, PORCH_DEPTH + PATH_W + BED_W / 2).flatMap((p, i, arr) => { const q = arr[i + 1]; if (!q) return [p]; const out = []; for (let t = 0; t < 1; t += 0.22) out.push([p[0] + (q[0] - p[0]) * t + (Math.sin(i * 7 + t * 40) * 1.8), p[1] + (q[1] - p[1]) * t + Math.cos(i * 5 + t * 30) * 1.8]); return out; });
+    const pts = n.name === 'Hydrangea bed' ? Array.from({ length: 7 }, (_, i) => [8.3, 108 + i * 3.6]) : offsetLine(bedArc, (i, n) => BED_OFF + bedWidth(i, n) / 2).flatMap((p, i, arr) => { const q = arr[i + 1]; if (!q) return [p]; const out = []; const w = bedWidth(i, arr.length) / 2 - 1; for (let t = 0; t < 1; t += 0.18) for (const k of [-1, 0, 1]) out.push([p[0] + (q[0] - p[0]) * t + Math.sin(i * 7 + t * 40 + k) * w, p[1] + (q[1] - p[1]) * t + Math.cos(i * 5 + t * 30 + k) * w]); return out; });
     pts.forEach(([x, z], i) => { const r = n.name === 'Hydrangea bed' ? 1.3 : 0.9; const s = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), M(n.colors[i % n.colors.length])); s.position.set(x, 1.1 + r * 0.5, z); s.castShadow = true; site.add(s); });
     void cx;
   }
   siteLabel('Main Lodge', -14, 42, 36, 1.4); siteLabel('Lodge deck', 12.5, 8, 52); siteLabel('Vine porch', 4, 16, 90, 0.8);
-  const mid = offsetLine(ARC, PORCH_DEPTH / 2)[5]; siteLabel('Covered porch', mid[0], 13, mid[1]);
-  const wmid = offsetLine(ARC, -15)[7]; siteLabel('Dining wing', wmid[0], 19, wmid[1]);
-  const bmid = offsetLine(bedArc, PORCH_DEPTH + PATH_W + BED_W / 2)[2]; siteLabel('Flower bed', bmid[0], 4, bmid[1], 0.7);
-  siteLabel('Hydrangeas', 22, 4, 65, 0.7);
+  const wmid = offsetLine(ARC, -24)[7]; siteLabel('Dining wing', wmid[0], 19, wmid[1]);
+  const pm = offsetLine(ARC, -PORCH_DEPTH / 2)[7]; siteLabel('Porch', pm[0], 13, pm[1], 0.7);
+  const bmid = offsetLine(bedArc, BED_OFF + 6)[3]; siteLabel('Flower bed', bmid[0], 4, bmid[1], 0.7);
+  siteLabel('Hydrangeas', 8.3, 4, 118, 0.6); siteLabel('Enclosed porch', -6, 17, 120, 0.8); siteLabel('Terrace', offsetLine(ARC, 5)[9][0], 2.5, offsetLine(ARC, 5)[9][1], 0.7);
 }
 buildSite();
 
@@ -637,9 +651,9 @@ function refreshList() {
   }
 }
 function refreshStats() {
-  let tables = 0, seats = 0, used = 0;
-  for (const o of objects) { const s = CATALOG[o.type]; if (s.countsTable) tables++; if (s.table || o.type === 'chair') seats += o.seats || 0; if (!s.noArea) used += footprintArea(o); }
-  $('stats').innerHTML = `<b>${tables}</b> table${tables === 1 ? '' : 's'} · <b>${seats}</b> seat${seats === 1 ? '' : 's'}<br>` +
+  let tables = 0, seats = 0, cer = 0, used = 0;
+  for (const o of objects) { const s = CATALOG[o.type]; if (s.countsTable) tables++; if (s.ceremony) cer += o.seats || 0; else if (s.table || o.type === 'chair') seats += o.seats || 0; if (!s.noArea) used += footprintArea(o); }
+  $('stats').innerHTML = `<b>${tables}</b> table${tables === 1 ? '' : 's'} · <b>${seats}</b> seat${seats === 1 ? '' : 's'}${cer ? ` · <b>${cer}</b> ceremony seats` : ''}<br>` +
     `Venue area <b>${Math.round(ROOM_AREA).toLocaleString()}</b> sq ft<br>Used by objects <b>${Math.round(used).toLocaleString()}</b> sq ft<br>Remaining <b>${Math.round(ROOM_AREA - used).toLocaleString()}</b> sq ft` +
     `<br><span class="muted">${objects.length} object${objects.length === 1 ? '' : 's'} placed</span>`;
   $('hud').innerHTML = `<b>${tables}</b> tables · <b>${seats}</b> seats · <b>${Math.round(ROOM_AREA - used).toLocaleString()}</b> sq ft free`;
