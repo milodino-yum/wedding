@@ -170,8 +170,19 @@ const ROOM = [
   [63.2,228.2],[60,215.8],[57,204.7],[51.8,193.6],[47.3,183.8],[38.8,172],[26.7,160.3],
   [12.6,149.8],[0.2,141.3],[6.3,132.5],[6.3,104.6],[19.5,104.6]
 ];
-const BBOX = { x0: -2, y0: -2, x1: 170, y1: 286 };
-const ROOM_AREA = Math.abs(ROOM.reduce((a, p, i) => { const q = ROOM[(i + 1) % ROOM.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+const BBOX = { x0: -2, y0: -2, x1: 170, y1: 286 };      // extent of the PDF floor-plan raster
+const VIEW = { x0: -66, y0: -2, x1: 170, y1: 286 };      // grid / export extent (adds the Terrace Room)
+// Terrace Room: 35 x 49 ft, 10 ft ceiling, at the lodge end of the dining wing. Its 35 ft exit wall
+// sits on the wing's wall line (10 ft behind the porch posts) and the room runs 49 ft back into the
+// building; Ardelia's dining room is attached along the long wall toward the porch's far end.
+const TR_S = [0.2, 141.3];                                   // porch post line starts here (PDF)
+const TR_U = [0.825, 0.565], TR_N = [0.565, -0.825];         // along the porch / toward the lawn
+const trPt = (u, n) => [TR_S[0] + u * TR_U[0] + n * TR_N[0], TR_S[1] + u * TR_U[1] + n * TR_N[1]];
+const TR_W = 35, TR_D = 49, TR_SET = 10;                       // width along porch, depth, wall setback behind posts
+const TERRACE = [trPt(-TR_W, -TR_SET), trPt(0, -TR_SET), trPt(0, -TR_SET - TR_D), trPt(-TR_W, -TR_SET - TR_D)];
+const polyArea = poly => Math.abs(poly.reduce((a, p, i) => { const q = poly[(i + 1) % poly.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
+const ZONES = [{ name: 'Garden', poly: ROOM, area: polyArea(ROOM) }, { name: 'Terrace Room', poly: TERRACE, area: polyArea(TERRACE) }];
+const ROOM_AREA = ZONES[0].area;
 
 const CHAIR = { w: 1.5, d: 1.5, h: 3, seat: 1.5, gap: 0.25 };
 
@@ -343,8 +354,9 @@ scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(outlinePts), n
 const grid = new THREE.Group();
 {
   const minor = [], major = [];
-  for (let x = Math.ceil(BBOX.x0); x <= BBOX.x1; x++) (x % 10 === 0 ? major : minor).push(new THREE.Vector3(x, 0.02, BBOX.y0), new THREE.Vector3(x, 0.02, BBOX.y1));
-  for (let z = Math.ceil(BBOX.y0); z <= BBOX.y1; z++) (z % 10 === 0 ? major : minor).push(new THREE.Vector3(BBOX.x0, 0.02, z), new THREE.Vector3(BBOX.x1, 0.02, z));
+  for (let x = Math.ceil(VIEW.x0); x <= VIEW.x1; x++) (x % 10 === 0 ? major : minor).push(new THREE.Vector3(x, 0.02, VIEW.y0), new THREE.Vector3(x, 0.02, VIEW.y1));
+  for (let z = Math.ceil(VIEW.y0); z <= VIEW.y1; z++) (z % 10 === 0 ? major : minor).push(new THREE.Vector3(VIEW.x0, 0.02, z), new THREE.Vector3(VIEW.x1, 0.02, z));
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 500), new THREE.MeshStandardMaterial({ color: 0xecebe4, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(90, -0.03, 140); ground.receiveShadow = true; scene.add(ground);
   grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(minor), new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.10 })));
   grid.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(major), new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 })));
   scene.add(grid);
@@ -390,11 +402,61 @@ function extrudePoly(poly, h, mat, y = 0) {
 function flatPoly(poly, mat, y) { const m = new THREE.Mesh(new THREE.ShapeGeometry(shapeFrom(poly)), mat); m.rotation.x = -Math.PI / 2; m.position.y = y; m.receiveShadow = true; return m; }
 const site = new THREE.Group(); scene.add(site);
 function siteLabel(text, x, y, z, scale = 1) { const sp = makeSprite(text); sp.position.set(x, y, z); sp.scale.multiplyScalar(scale); sp.userData.isLabel = true; site.add(sp); }
+// Terrace Room: open-topped so you can see and place things inside. Built in local coordinates
+// (x across the 35 ft exit wall, z = depth) then rotated to sit on the porch wall line. Windows on the
+// exit wall (facing the porch) and the long wall away from Ardelia's; French doors to Ardelia's; solid
+// wall with the media cabinet at the back.
+function buildTerraceRoom(white, red) {
+  const W = TR_W, D = TR_D, H = 10, t = 0.8;
+  const room = new THREE.Group();
+  const centre = trPt(-TR_W / 2, -TR_SET - TR_D / 2);
+  room.position.set(centre[0], 0, centre[1]);
+  room.rotation.y = Math.atan2(TR_N[0], TR_N[1]); // local +z -> toward the porch/lawn
+  site.add(room);
+  const add = m => { room.add(m); return m; };
+  // Striped wood floor, boards running the long way.
+  const c = document.createElement('canvas'); c.width = 256; c.height = 8; const g = c.getContext('2d');
+  const tones = ['#c98b4e', '#b9763f', '#8a5a34', '#d59a5e', '#a5673a', '#6e4527'];
+  for (let i = 0; i < 64; i++) { g.fillStyle = tones[i % tones.length]; g.fillRect(i * 4, 0, 4, 8); } // 64 boards across 35 ft, running the long way
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter;
+  const floor = add(new THREE.Mesh(new THREE.PlaneGeometry(W, D), M(0xffffff, { map: tex, roughness: 0.6 })));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = 0.008; floor.receiveShadow = true;
+  const glass = M(0xbfe0f0, { transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide }), trim = M(0xffffff);
+  // A wall from local (ax,az) to (bx,bz); windows = sill 2.5 ft, mullions every 5 ft, header at 9 ft; doors = openings [s0,s1] along it.
+  const wall = (ax, az, bx, bz, windows, doors = []) => {
+    const len = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / len, uz = (bz - az) / len, ang = Math.atan2(-uz, ux);
+    const seg = (s0, s1, y, h, thick, mat) => { if (s1 - s0 <= 0) return; const m = box(s1 - s0, h, thick, mat); m.position.set(ax + ux * (s0 + s1) / 2, y + h / 2, az + uz * (s0 + s1) / 2); m.rotation.y = ang; add(m); };
+    if (!windows) { seg(0, len, 0, H, t, white); return; }
+    let cur = 0; for (const [d0, d1] of doors) { seg(cur, d0, 0, 2.5, t, white); cur = d1; } seg(cur, len, 0, 2.5, t, white);
+    seg(0, len, 9, 1, t, white);
+    for (let x = 0; x <= len + 0.01; x += 5) seg(Math.max(0, x - 0.2), Math.min(len, x + 0.2), 2.5, 6.5, t, trim);
+    for (let x = 0; x < len; x += 5) { const inDoor = doors.some(([d0, d1]) => x + 2.5 > d0 && x + 2.5 < d1); seg(x + 0.2, Math.min(len, x + 4.8), inDoor ? 0 : 2.5, inDoor ? 9 : 6.5, 0.1, glass); }
+  };
+  const hw = W / 2, hd = D / 2;
+  wall(-hw, hd + t / 2, hw, hd + t / 2, true, [[15, 20]]);      // exit wall along the porch, door in the middle
+  wall(hw + t / 2, hd, hw + t / 2, -hd, true);                  // long window wall (away from Ardelia's)
+  wall(-hw - t / 2, -hd, -hw - t / 2, hd, false);               // wall shared with Ardelia's ...
+  for (const zc of [-hd + 10, 0, hd - 10]) { const d = box(t + 0.2, 8, 6, glass); d.position.set(-hw - t / 2, 4, zc); add(d); } // ... French doors
+  wall(hw, -hd - t / 2, -hw, -hd - t / 2, false);               // back wall with the media cabinet
+  add(box(9, 7, 1.6, M(0x7a4b2a), 0, 0, -hd + 0.8));
+  const ceiling = add(new THREE.Mesh(new THREE.PlaneGeometry(W + 2 * t, D + 2 * t), M(0xffffff, { transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide })));
+  ceiling.rotation.x = -Math.PI / 2; ceiling.position.y = H;
+  const edge = add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W + 2 * t, 0.01, D + 2 * t)), new THREE.LineBasicMaterial({ color: 0x8a8a8a }))); edge.position.y = H;
+  site.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(TERRACE.map(p => new THREE.Vector3(p[0], 0.04, p[1]))), new THREE.LineBasicMaterial({ color: 0x6b4a2b })));
+  siteLabel('Terrace Room 35 × 49', centre[0], H + 1.5, centre[1]);
+  const ard = trPt(12, -TR_SET - 20); siteLabel("Ardelia's (dining room)", ard[0], 16, ard[1], 0.8);
+  // Porch, terrace paving and posts continue in front of the exit wall.
+  const ext = [trPt(-TR_W - 1, -TR_SET), trPt(0.5, -TR_SET), trPt(0.5, 0.6), trPt(-TR_W - 1, 0.6)];
+  site.add(extrudePoly(ext, 0.8, red, 10.5));
+  site.add(flatPoly([trPt(-TR_W - 1, -TR_SET), trPt(0, -TR_SET), trPt(0, 0), trPt(-TR_W - 1, 0)], M(0xd9d4c7), 0.3));
+  site.add(flatPoly([trPt(-TR_W - 1, 0), trPt(0, 0), trPt(0, TERRACE_W), trPt(-TR_W - 1, TERRACE_W)], M(0x6b6b6b, { roughness: 1 }), 0.012));
+  for (const u of [-TR_W, -TR_W * 2 / 3, -TR_W / 3]) { const p = trPt(u, -0.5); site.add(box(0.8, 10.5, 0.8, M(0xffffff), p[0], 0, p[1])); }
+}
 function buildSite() {
   const white = M(0xf4f2ec), red = M(0x8c2f2f), deckMat = M(0xd9d4c7), vine = M(0x4a7f3c), rail = M(0xffffff), asphalt = M(0x6b6b6b, { roughness: 1 }), soil = M(0x3f6b33);
   // Main lodge (three storeys) behind the deck, single-storey wing around the corner and behind the covered porch.
-  site.add(box(40, 34, 81, white, -14, 0, 34.5)); site.add(box(42, 5, 83, red, -14, 34, 34.5));
-  site.add(box(40, 14, 62, white, -14, 0, 106)); site.add(box(42, 3, 64, red, -14, 14, 106));
+  site.add(box(40, 34, 89, white, -14, 0, 38.5)); site.add(box(42, 5, 91, red, -14, 34, 38.5));
+  buildTerraceRoom(white, red);
   const wingBack = [...offsetLine(ARC, -PORCH_DEPTH - 1), ...offsetLine(ARC, -40).reverse()];
   site.add(extrudePoly(wingBack, 14, white)); site.add(extrudePoly(wingBack, 3, red, 14));
   site.add(box(1.2, 13, 75, vine, 6.6, 0, 37.5)); // vine-covered porch face
@@ -431,7 +493,7 @@ function buildSite() {
   const wmid = offsetLine(ARC, -24)[7]; siteLabel('Dining wing', wmid[0], 19, wmid[1]);
   const pm = offsetLine(ARC, -PORCH_DEPTH / 2)[7]; siteLabel('Porch', pm[0], 13, pm[1], 0.7);
   const bmid = offsetLine(bedArc, BED_OFF + 6)[3]; siteLabel('Flower bed', bmid[0], 4, bmid[1], 0.7);
-  siteLabel('Hydrangeas', 8.3, 4, 118, 0.6); siteLabel('Enclosed porch', -6, 17, 120, 0.8); siteLabel('Terrace', offsetLine(ARC, 5)[9][0], 2.5, offsetLine(ARC, 5)[9][1], 0.7);
+  siteLabel('Hydrangeas', 8.3, 4, 118, 0.6); siteLabel('Terrace', offsetLine(ARC, 5)[9][0], 2.5, offsetLine(ARC, 5)[9][1], 0.7);
 }
 buildSite();
 
@@ -464,8 +526,9 @@ function resetView() {
 }
 function topView() {
   controls.target.copy(CENTER);
-  const h = Math.max(BBOX.y1 - BBOX.y0, (BBOX.x1 - BBOX.x0) * viewport.clientHeight / Math.max(1, viewport.clientWidth)) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.08;
-  camera.position.set(CENTER.x, h, CENTER.z + 0.01); controls.update();
+  const cx = (VIEW.x0 + VIEW.x1) / 2, cz = (VIEW.y0 + VIEW.y1) / 2; controls.target.set(cx, 0, cz);
+  const h = Math.max(VIEW.y1 - VIEW.y0, (VIEW.x1 - VIEW.x0) * viewport.clientHeight / Math.max(1, viewport.clientWidth)) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.08;
+  camera.position.set(cx, h, cz + 0.01); controls.update();
 }
 function resize() {
   const w = viewport.clientWidth, h = viewport.clientHeight;
@@ -519,14 +582,19 @@ function segsCross(a, b, c, d) {
   const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
   return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b);
 }
+function rectInsidePoly(cs, poly) {
+  for (const c of cs) if (!pointInPoly(poly, c[0], c[1])) return false;
+  for (let i = 0; i < 4; i++) for (let j = 0; j < poly.length; j++)
+    if (segsCross(cs[i], cs[(i + 1) % 4], poly[j], poly[(j + 1) % poly.length])) return false;
+  return true;
+}
 function fitsAt(o, x, z, rot) {
   const cs = cornersAt(o, x, z, rot);
-  for (const c of cs) if (!pointInRoom(c[0], c[1])) return false;
-  for (let i = 0; i < 4; i++) for (let j = 0; j < ROOM.length; j++)
-    if (segsCross(cs[i], cs[(i + 1) % 4], ROOM[j], ROOM[(j + 1) % ROOM.length])) return false;
+  if (!ZONES.some(zn => rectInsidePoly(cs, zn.poly))) return false;
   for (const n of NOGO) if (rectHitsPoly(cs, n.poly)) return false;
   return true;
 }
+function zoneOf(o) { return ZONES.find(zn => pointInPoly(zn.poly, o.x, o.z)) || ZONES[0]; }
 // Find the nearest valid spot around (x,z); returns null if none within reach.
 function findSpot(o, x, z, rot) {
   if (fitsAt(o, x, z, rot)) return [x, z];
@@ -605,7 +673,7 @@ function refreshInspector() {
   const o = selected; $('sel-empty').hidden = !!o; $('sel-panel').hidden = !o; if (!o) return;
   refreshing = true;
   const spec = CATALOG[o.type];
-  $('sel-name').textContent = o.label || spec.name; $('sel-type').textContent = spec.name + ' · #' + o.id;
+  $('sel-name').textContent = o.label || spec.name; $('sel-type').textContent = spec.name + ' · #' + o.id + ' · ' + zoneOf(o).name;
   f.label.value = o.label; f.x.value = o.x.toFixed(2).replace(/\.?0+$/, ''); f.y.value = o.z.toFixed(2).replace(/\.?0+$/, ''); f.rot.value = Math.round(o.rot);
   f.w.value = o.w; f.d.value = o.d; f.h.value = o.h;
   const rs = !!spec.resizable; f.w.disabled = f.d.disabled = f.h.disabled = !rs;
@@ -651,12 +719,21 @@ function refreshList() {
   }
 }
 function refreshStats() {
-  let tables = 0, seats = 0, cer = 0, used = 0;
-  for (const o of objects) { const s = CATALOG[o.type]; if (s.countsTable) tables++; if (s.ceremony) cer += o.seats || 0; else if (s.table || o.type === 'chair') seats += o.seats || 0; if (!s.noArea) used += footprintArea(o); }
-  $('stats').innerHTML = `<b>${tables}</b> table${tables === 1 ? '' : 's'} · <b>${seats}</b> seat${seats === 1 ? '' : 's'}${cer ? ` · <b>${cer}</b> ceremony seats` : ''}<br>` +
-    `Venue area <b>${Math.round(ROOM_AREA).toLocaleString()}</b> sq ft<br>Used by objects <b>${Math.round(used).toLocaleString()}</b> sq ft<br>Remaining <b>${Math.round(ROOM_AREA - used).toLocaleString()}</b> sq ft` +
-    `<br><span class="muted">${objects.length} object${objects.length === 1 ? '' : 's'} placed</span>`;
-  $('hud').innerHTML = `<b>${tables}</b> tables · <b>${seats}</b> seats · <b>${Math.round(ROOM_AREA - used).toLocaleString()}</b> sq ft free`;
+  const per = ZONES.map(zn => ({ zn, tables: 0, seats: 0, cer: 0, used: 0 }));
+  let tables = 0, seats = 0, cer = 0, free = 0;
+  for (const o of objects) {
+    const s = CATALOG[o.type], t = per[ZONES.indexOf(zoneOf(o))];
+    if (s.countsTable) t.tables++; if (s.ceremony) t.cer += o.seats || 0; else if (s.table || o.type === 'chair') t.seats += o.seats || 0; if (!s.noArea) t.used += footprintArea(o);
+  }
+  const n = v => Math.round(v).toLocaleString();
+  let html = '';
+  for (const t of per) {
+    tables += t.tables; seats += t.seats; cer += t.cer; free += t.zn.area - t.used;
+    html += `<b>${t.zn.name}</b> (${n(t.zn.area)} sq ft)<br>${t.tables} table${t.tables === 1 ? '' : 's'} · ${t.seats} seat${t.seats === 1 ? '' : 's'}${t.cer ? ` · ${t.cer} ceremony seats` : ''}<br>Free <b>${n(t.zn.area - t.used)}</b> sq ft<br>`;
+  }
+  html += `<span class="muted">Total: ${tables} tables · ${seats} seats${cer ? ` · ${cer} ceremony seats` : ''} · ${objects.length} object${objects.length === 1 ? '' : 's'}</span>`;
+  $('stats').innerHTML = html;
+  $('hud').innerHTML = `<b>${tables}</b> tables · <b>${seats}</b> seats · <b>${n(free)}</b> sq ft free`;
 }
 
 // ---------------------------------------------------------------------------
@@ -785,9 +862,10 @@ $('btn-top').onclick = topView; $('btn-reset').onclick = resetView;
 
 // PNG export: orthographic, straight down, whole venue.
 $('btn-png').onclick = () => {
-  const W = 1800, mw = 4; const bw = BBOX.x1 - BBOX.x0 + mw * 2, bh = BBOX.y1 - BBOX.y0 + mw * 2; const H = Math.round(W * bh / bw);
+  const W = 1800, mw = 4; const bw = VIEW.x1 - VIEW.x0 + mw * 2, bh = VIEW.y1 - VIEW.y0 + mw * 2; const H = Math.round(W * bh / bw);
   const ortho = new THREE.OrthographicCamera(-bw / 2, bw / 2, bh / 2, -bh / 2, 1, 1000);
-  ortho.position.set(CENTER.x, 500, CENTER.z); ortho.up.set(0, 0, -1); ortho.lookAt(CENTER.x, 0, CENTER.z);
+  const ex = (VIEW.x0 + VIEW.x1) / 2, ez = (VIEW.y0 + VIEW.y1) / 2;
+  ortho.position.set(ex, 500, ez); ortho.up.set(0, 0, -1); ortho.lookAt(ex, 0, ez);
   const helpersVis = selOutline.visible; selOutline.visible = rotRing.visible = rotKnob.visible = rotStem.visible = false;
   const oldBg = scene.background; scene.background = new THREE.Color(0xffffff);
   const size = new THREE.Vector2(); renderer.getSize(size); const pr = renderer.getPixelRatio();
