@@ -171,14 +171,14 @@ const ROOM = [
   [12.6,149.8],[0.2,141.3],[6.3,132.5],[6.3,104.6],[19.5,104.6]
 ];
 const BBOX = { x0: -2, y0: -2, x1: 170, y1: 286 };      // extent of the PDF floor-plan raster
-const VIEW = { x0: -66, y0: -2, x1: 170, y1: 286 };      // grid / export extent (adds the Terrace Room)
-// Terrace Room: 35 x 49 ft, 10 ft ceiling, at the lodge end of the dining wing. Its 35 ft exit wall
-// sits on the wing's wall line (10 ft behind the porch posts) and the room runs 49 ft back into the
-// building; Ardelia's dining room is attached along the long wall toward the porch's far end.
-const TR_S = [0.2, 141.3];                                   // porch post line starts here (PDF)
-const TR_U = [0.825, 0.565], TR_N = [0.565, -0.825];         // along the porch / toward the lawn
-const trPt = (u, n) => [TR_S[0] + u * TR_U[0] + n * TR_N[0], TR_S[1] + u * TR_U[1] + n * TR_N[1]];
+const VIEW = { x0: -38, y0: -2, x1: 170, y1: 286 };      // grid / export extent
+// Terrace Room: 35 x 49 ft, 10 ft ceiling, at the far end of the dining wing, past Ardelia's. Its 35 ft
+// exit wall is the last stretch of the wing's wall line (10 ft behind the porch posts, by the lower lawn)
+// and the room runs 49 ft back into the building; Ardelia's is attached along the long wall toward the lodge.
 const TR_W = 35, TR_D = 49, TR_SET = 10;                       // width along porch, depth, wall setback behind posts
+const TR_S = [61.4, 271.2];                                    // porch post line ends here (PDF)
+const TR_U = [-0.054, 0.999], TR_N = [0.999, 0.054];           // along the porch (toward its end) / toward the lawn
+const trPt = (u, n) => [TR_S[0] + u * TR_U[0] + n * TR_N[0], TR_S[1] + u * TR_U[1] + n * TR_N[1]];
 const TERRACE = [trPt(-TR_W, -TR_SET), trPt(0, -TR_SET), trPt(0, -TR_SET - TR_D), trPt(-TR_W, -TR_SET - TR_D)];
 const polyArea = poly => Math.abs(poly.reduce((a, p, i) => { const q = poly[(i + 1) % poly.length]; return a + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2;
 const ZONES = [{ name: 'Garden', poly: ROOM, area: polyArea(ROOM) }, { name: 'Terrace Room', poly: TERRACE, area: polyArea(TERRACE) }];
@@ -378,6 +378,14 @@ function offsetLine(pts, dist) {
   });
 }
 const PORCH_DEPTH = 10, TERRACE_W = 10, BED_OFF = 16;
+// Polyline truncated `cut` ft before its end (used so the wing's mass stops where the Terrace Room begins).
+function trimEnd(pts, cut) {
+  let len = 0; const L = []; for (let i = 1; i < pts.length; i++) { len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); L.push(len); }
+  const keep = len - cut, out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) { if (L[i - 1] <= keep) { out.push(pts[i]); continue; } const prev = i > 1 ? L[i - 2] : 0, t = (keep - prev) / (L[i - 1] - prev); out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]); break; }
+  return out;
+}
+const ARC_WING = trimEnd(ARC, TR_W);
 // Porch posts: the small squares the PDF draws on the walkway line, plus a few to bridge gaps.
 const POST_LINE = [[7.8, 144.9], [17.8, 153], [26.7, 160.3], [34.6, 168.1], [43.5, 179.5], [51.8, 193.6], [56.7, 204.7], [59.9, 215.8], [63.2, 228.2], [64, 245], [63.8, 258], [61.6, 270]];
 const bedArc = ARC.filter(p => p[1] > 148 && p[1] < 232);
@@ -434,9 +442,9 @@ function buildTerraceRoom(white, red) {
   };
   const hw = W / 2, hd = D / 2;
   wall(-hw, hd + t / 2, hw, hd + t / 2, true, [[15, 20]]);      // exit wall along the porch, door in the middle
-  wall(hw + t / 2, hd, hw + t / 2, -hd, true);                  // long window wall (away from Ardelia's)
-  wall(-hw - t / 2, -hd, -hw - t / 2, hd, false);               // wall shared with Ardelia's ...
-  for (const zc of [-hd + 10, 0, hd - 10]) { const d = box(t + 0.2, 8, 6, glass); d.position.set(-hw - t / 2, 4, zc); add(d); } // ... French doors
+  wall(-hw - t / 2, hd, -hw - t / 2, -hd, true);                // long window wall (toward the porch's end)
+  wall(hw + t / 2, -hd, hw + t / 2, hd, false);                 // wall shared with Ardelia's (toward the lodge) ...
+  for (const zc of [-hd + 10, 0, hd - 10]) { const d = box(t + 0.2, 8, 6, glass); d.position.set(hw + t / 2, 4, zc); add(d); } // ... French doors
   wall(hw, -hd - t / 2, -hw, -hd - t / 2, false);               // back wall with the media cabinet
   add(box(9, 7, 1.6, M(0x7a4b2a), 0, 0, -hd + 0.8));
   const ceiling = add(new THREE.Mesh(new THREE.PlaneGeometry(W + 2 * t, D + 2 * t), M(0xffffff, { transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide })));
@@ -444,20 +452,15 @@ function buildTerraceRoom(white, red) {
   const edge = add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W + 2 * t, 0.01, D + 2 * t)), new THREE.LineBasicMaterial({ color: 0x8a8a8a }))); edge.position.y = H;
   site.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(TERRACE.map(p => new THREE.Vector3(p[0], 0.04, p[1]))), new THREE.LineBasicMaterial({ color: 0x6b4a2b })));
   siteLabel('Terrace Room 35 × 49', centre[0], H + 1.5, centre[1]);
-  const ard = trPt(12, -TR_SET - 20); siteLabel("Ardelia's (dining room)", ard[0], 16, ard[1], 0.8);
-  // Porch, terrace paving and posts continue in front of the exit wall.
-  const ext = [trPt(-TR_W - 1, -TR_SET), trPt(0.5, -TR_SET), trPt(0.5, 0.6), trPt(-TR_W - 1, 0.6)];
-  site.add(extrudePoly(ext, 0.8, red, 10.5));
-  site.add(flatPoly([trPt(-TR_W - 1, -TR_SET), trPt(0, -TR_SET), trPt(0, 0), trPt(-TR_W - 1, 0)], M(0xd9d4c7), 0.3));
-  site.add(flatPoly([trPt(-TR_W - 1, 0), trPt(0, 0), trPt(0, TERRACE_W), trPt(-TR_W - 1, TERRACE_W)], M(0x6b6b6b, { roughness: 1 }), 0.012));
-  for (const u of [-TR_W, -TR_W * 2 / 3, -TR_W / 3]) { const p = trPt(u, -0.5); site.add(box(0.8, 10.5, 0.8, M(0xffffff), p[0], 0, p[1])); }
+  const ard = trPt(-TR_W - 14, -TR_SET - 18); siteLabel("Ardelia's", ard[0], 16, ard[1], 0.8);
 }
 function buildSite() {
   const white = M(0xf4f2ec), red = M(0x8c2f2f), deckMat = M(0xd9d4c7), vine = M(0x4a7f3c), rail = M(0xffffff), asphalt = M(0x6b6b6b, { roughness: 1 }), soil = M(0x3f6b33);
   // Main lodge (three storeys) behind the deck, single-storey wing around the corner and behind the covered porch.
-  site.add(box(40, 34, 89, white, -14, 0, 38.5)); site.add(box(42, 5, 91, red, -14, 34, 38.5));
+  site.add(box(40, 34, 81, white, -14, 0, 34.5)); site.add(box(42, 5, 83, red, -14, 34, 34.5));
+  site.add(box(40, 14, 62, white, -14, 0, 106)); site.add(box(42, 3, 64, red, -14, 14, 106));
   buildTerraceRoom(white, red);
-  const wingBack = [...offsetLine(ARC, -PORCH_DEPTH - 1), ...offsetLine(ARC, -40).reverse()];
+  const wingBack = [...offsetLine(ARC_WING, -PORCH_DEPTH - 1), ...offsetLine(ARC_WING, -40).reverse()];
   site.add(extrudePoly(wingBack, 14, white)); site.add(extrudePoly(wingBack, 3, red, 14));
   site.add(box(1.2, 13, 75, vine, 6.6, 0, 37.5)); // vine-covered porch face
   // Raised deck with railing; the two stair notches are where the PDF draws them.
@@ -468,7 +471,7 @@ function buildSite() {
   for (const [a, b] of deckSegs) site.add(box(0.25, 0.25, b - a, rail, 19.2, 5.5, (a + b) / 2));
   site.add(box(13.5, 0.25, 0.25, rail, 12.75, 5.5, 0.3)); site.add(box(13.5, 0.25, 0.25, rail, 12.75, 5.5, 105));
   // Dining-wing porch: the roof overhang with posts on the PDF's walkway line; wall and windows 10 ft behind the posts.
-  site.add(extrudePoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, -PORCH_DEPTH - 1).reverse()], 11, white));
+  site.add(extrudePoly([...offsetLine(ARC_WING, -PORCH_DEPTH), ...offsetLine(ARC_WING, -PORCH_DEPTH - 1).reverse()], 11, white));
   site.add(extrudePoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, 0.6).reverse()], 0.8, red, 10.5));
   site.add(flatPoly([...offsetLine(ARC, -PORCH_DEPTH), ...offsetLine(ARC, 0).reverse()], deckMat, 0.3));
   offsetLine(POST_LINE, -0.5).forEach(([x, z]) => site.add(box(0.8, 10.5, 0.8, rail, x, 0, z)));
@@ -490,10 +493,10 @@ function buildSite() {
     void cx;
   }
   siteLabel('Main Lodge', -14, 42, 36, 1.4); siteLabel('Lodge deck', 12.5, 8, 52); siteLabel('Vine porch', 4, 16, 90, 0.8);
-  const wmid = offsetLine(ARC, -24)[7]; siteLabel('Dining wing', wmid[0], 19, wmid[1]);
+  const wmid = offsetLine(ARC, -24)[5]; siteLabel("Dining wing · Ardelia's", wmid[0], 19, wmid[1]);
   const pm = offsetLine(ARC, -PORCH_DEPTH / 2)[7]; siteLabel('Porch', pm[0], 13, pm[1], 0.7);
   const bmid = offsetLine(bedArc, BED_OFF + 6)[3]; siteLabel('Flower bed', bmid[0], 4, bmid[1], 0.7);
-  siteLabel('Hydrangeas', 8.3, 4, 118, 0.6); siteLabel('Terrace', offsetLine(ARC, 5)[9][0], 2.5, offsetLine(ARC, 5)[9][1], 0.7);
+  siteLabel('Hydrangeas', 8.3, 4, 118, 0.6); siteLabel('Enclosed porch', -6, 17, 120, 0.8); siteLabel('Terrace', offsetLine(ARC, 5)[9][0], 2.5, offsetLine(ARC, 5)[9][1], 0.7);
 }
 buildSite();
 

@@ -41,10 +41,10 @@ Toggled with the **Site** checkbox. They are context, not placeable objects:
   no-go zones: objects cannot be placed on them.
 - The shrub bank along the lake-view edge and the lake beyond it, for orientation.
 
-- The **Terrace Room** (35 × 49 ft, 10 ft ceiling, 1,715 sq ft) at the lodge end of the
-  dining wing, drawn open-topped so you can place things inside. Its exit wall with the door
-  sits on the porch, its long window wall faces away from Ardelia's dining room, and French
-  doors open into Ardelia's. It is a second placeable zone with its own table, seat and free-area
+- The **Terrace Room** (35 × 49 ft, 10 ft ceiling, about 1,715 sq ft) at the far end of the
+  dining wing, past Ardelia's dining room, drawn open-topped so you can place things inside.
+  Its exit wall with the door sits on the porch facing the lower lawn of the surprise garden,
+  its long window wall faces the end of the wing, and French doors open into Ardelia's. It is a second placeable zone with its own table, seat and free-area
   tally in the Layout panel; the selected-object panel says which zone an object is in.
 
 Depths and heights are estimates from the photos; the PDF gives the positions. Mature
