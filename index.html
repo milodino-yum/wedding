@@ -72,6 +72,12 @@
       <option value="1">1 ft</option>
       <option value="2">2 ft</option>
     </select>
+    <select id="sel-rot" title="Rotation step for R, the rotate buttons and the knob">
+      <option value="1">1°</option>
+      <option value="5" selected>5°</option>
+      <option value="15">15°</option>
+      <option value="45">45°</option>
+    </select>
     <span class="sep"></span>
     <label class="chk"><input type="checkbox" id="chk-grid" checked> Grid</label>
     <label class="chk"><input type="checkbox" id="chk-plan" checked> Floor plan</label>
@@ -106,7 +112,7 @@
 
   <div id="viewport">
     <div id="hud"></div>
-    <div id="hint">Click an item on the left to add it. Drag objects to move, drag the orange knob or press <kbd>R</kbd> to rotate, <kbd>Del</kbd> deletes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, arrows nudge. Orbit: left-drag on empty space · Pan: right-drag · Zoom: wheel.</div>
+    <div id="hint">Click an item on the left to add it. Drag objects to move, drag the orange knob or press <kbd>R</kbd> to rotate (step in the header), <kbd>Del</kbd> deletes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, arrows nudge. Orbit: left-drag on empty space · Pan: right-drag · Zoom: wheel.</div>
     <div id="toast"></div>
     <div id="err"></div>
   </div>
@@ -125,7 +131,7 @@
           <input type="number" id="f-y" step="0.5" title="Y (ft, from plan's top edge)">
         </div></div>
       <div class="field"><span></span><span class="unit">X, Y in feet from the plan's top-left</span></div>
-      <div class="field"><span>Rotation</span><input type="number" id="f-rot" step="15" title="Degrees, clockwise from above"></div>
+      <div class="field"><span>Rotation</span><input type="number" id="f-rot" step="5" title="Degrees, clockwise from above"></div>
       <div class="field"><span>Size W×D×H</span>
         <div class="row3">
           <input type="number" id="f-w" step="0.5" min="0.5">
@@ -137,8 +143,8 @@
       <div class="field"><span>Footprint</span><span id="f-foot" class="unit"></span></div>
       <div style="height:8px"></div>
       <div class="actions">
-        <button id="btn-rot-l" title="Rotate 15° counter-clockwise (Shift+R)">↺ 15°</button>
-        <button id="btn-rot-r" title="Rotate 15° clockwise (R)">↻ 15°</button>
+        <button id="btn-rot-l" title="Rotate counter-clockwise by the rotation step (Shift+R)">↺ 5°</button>
+        <button id="btn-rot-r" title="Rotate clockwise by the rotation step (R)">↻ 5°</button>
         <button id="btn-dup" title="Ctrl/Cmd+D">Duplicate</button>
         <button id="btn-del" class="danger" title="Delete key">Delete</button>
       </div>
@@ -669,7 +675,7 @@ function updateSelectionHelpers() {
   rotStem.geometry.setFromPoints([new THREE.Vector3(o.x, 0.08, o.z), new THREE.Vector3(kx, 0.08, kz)]);
 }
 const $ = id => document.getElementById(id);
-const ui = { snap: $('chk-snap'), snapSize: $('sel-snap'), grid: $('chk-grid'), plan: $('chk-plan'), labels: $('chk-labels'), site: $('chk-site') };
+const ui = { snap: $('chk-snap'), snapSize: $('sel-snap'), grid: $('chk-grid'), plan: $('chk-plan'), labels: $('chk-labels'), site: $('chk-site'), rotStep: $('sel-rot') };
 const f = { label: $('f-label'), x: $('f-x'), y: $('f-y'), rot: $('f-rot'), w: $('f-w'), d: $('f-d'), h: $('f-h'), seats: $('f-seats') };
 let refreshing = false;
 function refreshInspector() {
@@ -707,8 +713,8 @@ f.seats.addEventListener('change', () => {
   o.seats = Math.max(0, Math.min(spec.maxSeats || 24, Math.round(parseFloat(f.seats.value) || 0)));
   rebuild(o); refreshInspector(); changed();
 });
-$('btn-rot-l').onclick = () => selected && setRotation(selected, selected.rot - 15);
-$('btn-rot-r').onclick = () => selected && setRotation(selected, selected.rot + 15);
+$('btn-rot-l').onclick = () => selected && setRotation(selected, selected.rot - rotStep());
+$('btn-rot-r').onclick = () => selected && setRotation(selected, selected.rot + rotStep());
 $('btn-dup').onclick = () => selected && duplicate(selected);
 $('btn-del').onclick = () => selected && removeObject(selected);
 
@@ -773,7 +779,7 @@ function onPointerMove(e) {
   } else if (drag.mode === 'rotate') {
     const p = floorHit(e); if (!p) return; const o = drag.o;
     let deg = THREE.MathUtils.radToDeg(Math.atan2(p.x - o.x, p.z - o.z)); deg = -deg; // clockwise from +z (front)
-    if (ui.snap.checked) deg = Math.round(deg / 15) * 15;
+    if (ui.snap.checked) deg = Math.round(deg / rotStep()) * rotStep();
     deg = ((Math.round(deg) % 360) + 360) % 360;
     if (deg !== o.rot && fitsAt(o, o.x, o.z, deg)) { o.rot = deg; applyTransform(o); updateSelectionHelpers(); refreshInspector(); drag.moved = true; }
   }
@@ -787,6 +793,7 @@ function onPointerUp(e) {
 canvas.addEventListener('pointermove', e => { if (drag) return; const pick = pickObject(e); canvas.style.cursor = pick ? (pick.knob ? 'grab' : 'move') : ''; });
 
 function snapSize() { return parseFloat(ui.snapSize.value) || 0.5; }
+function rotStep() { return parseFloat(ui.rotStep.value) || 5; }
 function snapV(v) { if (!ui.snap.checked) return Math.round(v * 100) / 100; const s = snapSize(); return Math.round(v / s) * s; }
 
 // Keyboard
@@ -797,7 +804,7 @@ window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); saveJSON(); return; }
   if (!selected) { if (k === 't') topView(); else if (k === 'home') resetView(); return; }
   if (k === 'delete' || k === 'backspace') { e.preventDefault(); removeObject(selected); }
-  else if (k === 'r') { e.preventDefault(); setRotation(selected, selected.rot + (e.shiftKey ? -15 : 15)); }
+  else if (k === 'r') { e.preventDefault(); setRotation(selected, selected.rot + (e.shiftKey ? -rotStep() : rotStep())); }
   else if (k === 'escape') select(null);
   else if (k.startsWith('arrow')) {
     e.preventDefault(); const s = e.shiftKey ? snapSize() * 4 : snapSize(); const o = selected;
@@ -833,7 +840,7 @@ for (const [type, spec] of Object.entries(CATALOG)) {
 const LS_KEY = 'wedding-layout-v1';
 function serialize() {
   return { version: 1, venue: 'Basin Harbor – Surprise Garden', savedAt: new Date().toISOString(), tableCounter,
-    settings: { snap: ui.snap.checked, snapSize: snapSize(), grid: ui.grid.checked, plan: ui.plan.checked, labels: ui.labels.checked, site: ui.site.checked },
+    settings: { snap: ui.snap.checked, snapSize: snapSize(), rotStep: rotStep(), grid: ui.grid.checked, plan: ui.plan.checked, labels: ui.labels.checked, site: ui.site.checked },
     objects: objects.map(o => ({ type: o.type, label: o.label, x: o.x, y: o.z, rot: o.rot, w: o.w, d: o.d, h: o.h, seats: o.seats, ...(o.color !== undefined ? { color: o.color } : {}) })) };
 }
 function loadData(data) {
@@ -841,7 +848,7 @@ function loadData(data) {
   clearAll(false);
   for (const s of data.objects) { if (!CATALOG[s.type]) continue; addObject(s.type, { label: s.label || '', x: s.x, z: s.y, rot: s.rot || 0, w: s.w, d: s.d, h: s.h, seats: s.seats, color: s.color }, { quiet: true, silentLabel: true }); }
   tableCounter = data.tableCounter ?? objects.filter(o => CATALOG[o.type].countsTable).length;
-  if (data.settings) { ui.snap.checked = data.settings.snap ?? true; if (data.settings.snapSize) ui.snapSize.value = String(data.settings.snapSize); ui.grid.checked = data.settings.grid ?? true; ui.plan.checked = data.settings.plan ?? true; ui.labels.checked = data.settings.labels ?? true; ui.site.checked = data.settings.site ?? true; applyToggles(); }
+  if (data.settings) { ui.snap.checked = data.settings.snap ?? true; if (data.settings.snapSize) ui.snapSize.value = String(data.settings.snapSize); if (data.settings.rotStep) ui.rotStep.value = String(data.settings.rotStep); ui.grid.checked = data.settings.grid ?? true; ui.plan.checked = data.settings.plan ?? true; ui.labels.checked = data.settings.labels ?? true; ui.site.checked = data.settings.site ?? true; applyToggles(); }
   select(null); changed();
 }
 function clearAll(commit = true) { while (objects.length) { const o = objects.pop(); objectsGroup.remove(o.group); } tableCounter = 0; select(null); if (commit) changed(); }
@@ -883,11 +890,12 @@ $('btn-png').onclick = () => {
 function applyPlanToggle() { floorMat.map = ui.plan.checked ? planTex : null; floorMat.color.set(ui.plan.checked && planTex ? 0xffffff : 0xf1eee6); floorMat.needsUpdate = true; }
 function applyToggles() {
   grid.visible = ui.grid.checked; site.visible = ui.site.checked; applyPlanToggle();
+  const rs = rotStep(); $('btn-rot-l').textContent = `↺ ${rs}°`; $('btn-rot-r').textContent = `↻ ${rs}°`; f.rot.step = rs;
   objectsGroup.traverse(n => { if (n.userData.isLabel) n.visible = ui.labels.checked; });
   site.traverse(n => { if (n.userData.isLabel) n.visible = ui.labels.checked; });
   changedSoon();
 }
-for (const el of [ui.grid, ui.plan, ui.labels, ui.site, ui.snap, ui.snapSize]) el.addEventListener('change', applyToggles);
+for (const el of [ui.grid, ui.plan, ui.labels, ui.site, ui.snap, ui.snapSize, ui.rotStep]) el.addEventListener('change', applyToggles);
 
 let toastTimer; function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200); }
 

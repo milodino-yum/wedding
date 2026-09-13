@@ -58,7 +58,7 @@ the trees really are; the example layout drops seven at approximate spots.
 | Add object | click it in the left palette (lands at the centre of the current view) |
 | Select | click it |
 | Move | drag on the ground, or arrow keys (Shift = 4× step) |
-| Rotate | drag the orange knob, `R` / `Shift+R` (15° steps), or type degrees in the panel |
+| Rotate | drag the orange knob, `R` / `Shift+R`, or type degrees in the panel; the step (1°, 5°, 15°, 45°, default 5°) is set in the header and also snaps the knob when Snap is on |
 | Delete | `Delete` or `Backspace` |
 | Duplicate | `Ctrl/Cmd+D` |
 | Orbit / pan / zoom | left-drag on empty ground / right-drag / wheel |
