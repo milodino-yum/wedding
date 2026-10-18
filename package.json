@@ -1,0 +1,76 @@
+{
+  "name": "wedding-layout-planner",
+  "productName": "Wedding Layout Planner",
+  "version": "1.0.0",
+  "description": "3D reception layout planner for Basin Harbor's Surprise Garden and Town Hall",
+  "author": "milodino-yum",
+  "private": true,
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3"
+  },
+  "desktopName": "wedding-layout-planner.desktop",
+  "build": {
+    "appId": "io.github.milodino-yum.wedding",
+    "directories": {
+      "output": "dist",
+      "buildResources": "desktop/build"
+    },
+    "files": [
+      "index.html",
+      "plan-image.js",
+      "town-hall-plan.js",
+      "vendor/**",
+      "desktop/main.js",
+      "desktop/build/icon.png"
+    ],
+    "artifactName": "Wedding-Layout-Planner-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "category": "public.app-category.lifestyle",
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Graphics",
+      "syncDesktopName": true
+    }
+  }
+}

@@ -1,0 +1,59 @@
+name: Desktop app
+
+# Builds the installers: a universal macOS .dmg (Apple silicon and Intel), a Windows setup .exe and a Linux
+# AppImage, each uploaded as a workflow artifact. Runs when the planner or its desktop shell changes, by hand from
+# the Actions tab, and for v* tags, which also attach the installers to a draft GitHub release.
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+    paths:
+      - index.html
+      - '*.js'
+      - vendor/**
+      - desktop/**
+      - package.json
+      - package-lock.json
+      - .github/workflows/desktop.yml
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, target: --mac, files: dist/*.dmg }
+          - { os: windows-latest, target: --win, files: dist/*.exe }
+          - { os: ubuntu-latest, target: --linux, files: dist/*.AppImage }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx electron-builder ${{ matrix.target }} --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Wedding-Layout-Planner-${{ runner.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: installers
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: installers/*

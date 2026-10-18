@@ -15,6 +15,7 @@
   #app { display: grid; grid-template-columns: 220px 1fr 280px; grid-template-rows: 48px 1fr; height: 100vh; }
   header { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: nowrap; overflow-x: auto; }
   header h1 { font-size: 15px; margin: 0 12px 0 0; white-space: nowrap; font-weight: 600; }
+  @media (max-width: 1600px) { header h1 { display: none; } } /* the venue picker and window title still name it */
   header .sep { width: 1px; height: 24px; background: var(--line); margin: 0 4px; }
   button { font: inherit; font-size: 12.5px; padding: 5px 9px; border: 1px solid var(--line); background: #faf9f6; color: var(--ink); border-radius: 6px; cursor: pointer; white-space: nowrap; }
   button:hover { background: #f0ede6; border-color: #c9c3b8; }
@@ -56,6 +57,10 @@
   kbd { font: 11px ui-monospace, Menlo, monospace; background: #f0ede6; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; }
   #err { position: absolute; inset: 0; display: none; place-items: center; background: rgba(245,244,240,.95); padding: 30px; font-size: 14px; line-height: 1.6; }
   #err.show { display: grid; }
+  dialog { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; width: 300px; background: var(--panel); color: var(--ink); box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  dialog::backdrop { background: rgba(43,42,39,.25); }
+  dialog h3 { font-size: 14px; margin: 0 0 10px; }
+  dialog form { display: flex; flex-direction: column; gap: 8px; }
 </style>
 </head>
 <body>
@@ -159,6 +164,21 @@
     <div class="muted" style="margin-top:auto; padding-top:10px;">Autosaves to this browser. Use Save JSON to keep a copy.</div>
   </aside>
 </div>
+
+<dialog id="dlg-custom">
+  <form method="dialog" novalidate>
+    <h3>Custom box</h3>
+    <div class="field"><span>Label</span><input type="text" id="c-label" value="Custom"></div>
+    <div class="field"><span>Size W×D×H</span>
+      <div class="row3">
+        <input type="number" id="c-w" value="4" step="0.5" min="0.5">
+        <input type="number" id="c-d" value="4" step="0.5" min="0.5">
+        <input type="number" id="c-h" value="3" step="0.5" min="0.1">
+      </div></div>
+    <div class="field"><span></span><span class="unit">feet (width × depth × height)</span></div>
+    <div class="actions"><button value="ok" class="primary">Add</button><button type="button" id="c-cancel">Cancel</button></div>
+  </form>
+</dialog>
 
 <script src="plan-image.js"></script>
 <script src="town-hall-plan.js"></script>
@@ -1020,7 +1040,7 @@ function snapV(v) { if (!ui.snap.checked) return Math.round(v * 100) / 100; cons
 
 // Keyboard
 window.addEventListener('keydown', e => {
-  const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'select' || tag === 'textarea' || $('dlg-custom').open) return;
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'd') { e.preventDefault(); if (selected) duplicate(selected); return; }
   if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); saveJSON(); return; }
@@ -1044,17 +1064,18 @@ for (const [type, spec] of Object.entries(CATALOG)) {
   const dims = spec.round ? `${fmt(spec.w)} ft dia · ${fmt(spec.h)} ft high` : `${fmt(spec.w)} × ${fmt(spec.d)} ft · ${fmt(spec.h)} ft high`;
   b.innerHTML = `<span class="sw ${spec.round ? 'round' : ''}" style="background:#${spec.sw.toString(16).padStart(6, '0')}"></span><span>${spec.name}<small>${dims}${spec.seats !== undefined && !spec.seatFixed ? ` · ${spec.seats} seats` : ''}</small></span>`;
   b.onclick = () => {
-    if (spec.custom) {
-      const w = parseFloat(prompt('Width (ft)?', '4')); if (isNaN(w)) return;
-      const d = parseFloat(prompt('Depth (ft)?', '4')); if (isNaN(d)) return;
-      const h = parseFloat(prompt('Height (ft)?', '3')); if (isNaN(h)) return;
-      const label = prompt('Label?', 'Custom') ?? 'Custom';
-      addObject(type, { w: Math.max(0.5, w), d: Math.max(0.5, d), h: Math.max(0.1, h), label }); return;
-    }
+    if (spec.custom) { $('dlg-custom').returnValue = ''; $('dlg-custom').showModal(); $('c-label').select(); return; } // Escape keeps returnValue
     addObject(type);
   };
   document.querySelector(`.pal-group[data-group="${spec.group}"]`).appendChild(b);
 }
+// Custom box sizes come from a small form (the desktop app has no window.prompt).
+$('c-cancel').onclick = () => $('dlg-custom').close('cancel');
+$('dlg-custom').addEventListener('close', () => {
+  if ($('dlg-custom').returnValue !== 'ok') return;
+  const num = (id, min, def) => Math.max(min, parseFloat($(id).value) || def);
+  addObject('custom', { w: num('c-w', 0.5, 4), d: num('c-d', 0.5, 4), h: num('c-h', 0.1, 3), label: $('c-label').value.trim() || 'Custom' });
+});
 
 // ---------------------------------------------------------------------------
 // Persistence

@@ -18,6 +18,45 @@ python3 -m http.server 8000
 # then open http://localhost:8000/
 ```
 
+Option C: the desktop app (below).
+
+## Desktop app
+
+The same planner in its own window, for macOS, Windows and Linux (Electron). It adds native
+menus and keeps its own autosave, separate from any browser's:
+
+| Menu | |
+| --- | --- |
+| File | Open Layout… (`Ctrl/Cmd+O`), Save Layout… (`Ctrl/Cmd+S`), Export PNG… (`Ctrl/Cmd+E`), Load Example, Clear Layout |
+| Venue | Surprise Garden (`Ctrl/Cmd+1`), Town Hall (`Ctrl/Cmd+2`) |
+| View | Top-down, Reset View, zoom, full screen |
+
+Save and export ask where to put the file and remember the folder; the window reopens at its
+last size and position. To move a layout from the browser version, Save JSON there and use
+File → Open Layout… in the app.
+
+**Getting the installers.** GitHub builds them whenever the planner changes (workflow
+`Desktop app`, also runnable by hand from the Actions tab): open the latest run and download
+the artifact for your system:
+
+- macOS: `Wedding-Layout-Planner-…-mac-universal.dmg` (Apple silicon and Intel). Open it and drag the
+  app to Applications.
+- Windows: `Wedding-Layout-Planner-…-win-x64.exe`, a setup program.
+- Linux: `Wedding-Layout-Planner-…-linux-x86_64.AppImage`; make it executable and run it.
+
+Pushing a `v*` tag (e.g. `v1.0.0`) also attaches the three installers to a draft GitHub release.
+
+The installers are not signed with an Apple or Microsoft developer certificate, so the first
+launch needs one extra step:
+
+- macOS: if it says the app can't be opened, go to System Settings → Privacy & Security and
+  click **Open Anyway** (or right-click the app → Open).
+- Windows: on the SmartScreen prompt, click **More info → Run anyway**.
+
+**From source:** `npm install`, then `npm start` runs the app and `npm run dist` builds an
+installer for the current system into `dist/` (`dist:mac`, `dist:win`, `dist:linux` pick one).
+The shell is `desktop/main.js`; `desktop/build/icon.png` is the app icon.
+
 ## What's in the box
 
 - `index.html` – the whole app (all CSS and JS inline).
@@ -26,6 +65,7 @@ python3 -m http.server 8000
 - `plan-image.js` – the garden floor plan from the PDF, embedded as a base64 WebP and
   scaled from the plan's 20 ft bar (6 px per foot). Shown under the grid; toggle with
   the "Floor plan" checkbox.
+- `desktop/`, `package.json` – the desktop app (see above); `.github/workflows/desktop.yml` builds its installers.
 - `town-hall-plan.js` – the Town Hall floor from the Matterport tour's floor-plan view, as a
   base64 WebP (12 px per foot): turned to match the venue's plan, levelled, scaled from the
   measured 68'11" wall, with the scanned chairs and the measurement overlay painted out so the
