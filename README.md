@@ -35,16 +35,17 @@ Save and export ask where to put the file and remember the folder; the window re
 last size and position. To move a layout from the browser version, Save JSON there and use
 File → Open Layout… in the app.
 
-**Getting the installers.** GitHub builds them whenever the planner changes (workflow
-`Desktop app`, also runnable by hand from the Actions tab): open the latest run and download
-the artifact for your system:
+**Getting the installers.** Download them from the repository's **Releases** page, which also
+lists the install steps. GitHub also builds them whenever the planner changes (workflow
+`Desktop app`, also runnable by hand from the Actions tab); those builds sit under each run's
+artifacts:
 
 - macOS: `Wedding-Layout-Planner-…-mac-universal.dmg` (Apple silicon and Intel). Open it and drag the
   app to Applications.
 - Windows: `Wedding-Layout-Planner-…-win-x64.exe`, a setup program.
 - Linux: `Wedding-Layout-Planner-…-linux-x86_64.AppImage`; make it executable and run it.
 
-Pushing a `v*` tag (e.g. `v1.0.0`) also attaches the three installers to a draft GitHub release.
+Pushing a `v*` tag (e.g. `v1.0.1`, after raising `version` in `package.json`) publishes a release with the three installers.
 
 The installers are not signed with an Apple or Microsoft developer certificate, so the first
 launch needs one extra step:

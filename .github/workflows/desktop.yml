@@ -2,7 +2,7 @@ name: Desktop app
 
 # Builds the installers: a universal macOS .dmg (Apple silicon and Intel), a Windows setup .exe and a Linux
 # AppImage, each uploaded as a workflow artifact. Runs when the planner or its desktop shell changes, by hand from
-# the Actions tab, and for v* tags, which also attach the installers to a draft GitHub release.
+# the Actions tab, and for v* tags, which also publish the installers as a GitHub release with install steps.
 on:
   push:
     branches: ['**']
@@ -55,5 +55,22 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          name: Wedding Layout Planner ${{ github.ref_name }}
           files: installers/*
+          body: |
+            Download the file for your computer from **Assets** below, then:
+
+            **Mac** (`…-mac-universal.dmg`, for Apple silicon and Intel Macs)
+            1. Double-click the downloaded file. A window opens showing the app.
+            2. Drag the app onto the Applications folder in that window.
+            3. Open your Applications folder and double-click **Wedding Layout Planner**.
+            4. The first time only, macOS says it can't verify the app. Click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway**, then **Open**. From then on it opens normally.
+
+            **Windows** (`…-win-x64.exe`)
+            1. Double-click the downloaded file.
+            2. If you see "Windows protected your PC", click **More info**, then **Run anyway**.
+            3. Follow the installer. It adds **Wedding Layout Planner** to the Start menu.
+
+            **Linux** (`…-linux-x86_64.AppImage`): make the file executable, then run it.
+
+            In the app, choose the venue in the box at the top left (or the **Venue** menu), then use **File → Load Example** to see a sample layout.
