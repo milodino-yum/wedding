@@ -192,13 +192,14 @@ const TERRACE = [trPt(-TR_W, -TR_SET), trPt(0, -TR_SET), trPt(0, -TR_SET - TR_D)
 // Town Hall, measured in the Matterport tour of the room: the 68'11" window wall, 28'8" screen wall, the 49'11" and
 // 19'5" deck-side walls either side of the stairwell, the 10'3" x 28'10" low-ceilinged side bay and the 29'3" x 15'
 // Sun Porch. Laid out like the venue's own plan, windows (golf course) along the top: x runs east from the screen wall,
-// y south from the window wall. Openings, trusses and the bay's post are placed from the tour photos; the deck is not
-// in the scan and is scaled roughly from the venue plan.
+// y south from the window wall. Openings, trusses, the tray ceiling and the bay's post are placed from the tour photos;
+// the deck is not in the scan: it runs along the porch and Board Room (street view) and its outline is scaled roughly
+// from the venue plan.
 const TH_D = 28.7, TH_BEAM = 68.9, TH_BAY = 79.5;                  // hall depth, side bay's beam line, bay's end wall
 const TH_STAIR = { x0: 50.1, x1: 70.3, y: 23.8 };                   // stairwell box let into the hall's deck-side corner
 const TH_HALL = [[0, 0], [TH_BAY, 0], [TH_BAY, TH_D], [TH_STAIR.x1, TH_D], [TH_STAIR.x1, TH_STAIR.y], [TH_STAIR.x0, TH_STAIR.y], [TH_STAIR.x0, TH_D], [0, TH_D]];
 const TH_PORCH = [[57.8, 29.8], [87.4, 29.8], [87.4, 44.9], [57.8, 44.9]];
-const TH_DECK = [[54.4, 53.9], [100.8, 53.9], [100.8, 62.6], [92.7, 70.3], [68, 70.3], [59.2, 62.4], [54.4, 62.4]];
+const TH_DECK = [[54.4, 45.7], [88.2, 45.7], [88.2, 53], [100.8, 53], [100.8, 62.6], [92.7, 70.3], [68, 70.3], [59.2, 62.4], [54.4, 62.4]]; // against the porch and Board Room
 const TH_TRUSS = [14, 27.6, 41.1, 57], TH_POST = [69.6, 13.5];     // truss lines (x) and the post under the bay's beam
 const rectPoly = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
 const TH_NOGO = [
@@ -210,21 +211,22 @@ const polyArea = poly => Math.abs(poly.reduce((a, p, i) => { const q = poly[(i +
 
 // One venue is shown at a time (?venue=townhall, else the last one used); each keeps its own autosave.
 // fill = [colour, opacity, outline colour] of the zone's floor tint; ground = [w, d, centre x, centre z, colour];
-// sun = light position; sky = fill light (higher indoors, where the walls only see the sky light); eye = default camera
+// sun = light position; sky = fill light (higher indoors, where the walls only see the sky light) and bounce its colour
+// from below (lawn, carpet); eye = default camera
 // offset from the plan's centre; labelScale sizes labels to the venue.
 const VENUES = {
   garden: { name: 'Surprise Garden', title: 'Garden Reception Planner', file: 'Basin Harbor – Surprise Garden', storageKey: 'wedding-layout-v1',
     plan: window.PLAN_IMAGE, bbox: { x0: -2, y0: -2, x1: 170, y1: 286 }, view: { x0: -38, y0: -2, x1: 170, y1: 286 }, // PDF raster extent; grid / export extent
     zones: [{ name: 'Garden', poly: ROOM, fill: [0x9dcf7f, 0.35, 0x2f6b2a] }, { name: 'Terrace Room', poly: TERRACE }],
     nogo: () => NOGO, build: buildGardenSite, example: loadGardenExample,
-    ground: [400, 500, 90, 140, 0xecebe4], sun: [120, 220, 60], shadow: 180, eye: [40, 200, 260], labelScale: 1, sky: 0.9,
+    ground: [400, 500, 90, 140, 0xecebe4], sun: [120, 220, 60], shadow: 180, eye: [40, 200, 260], labelScale: 1, sky: 0.9, bounce: 0x88a070,
     siteHint: 'Lodge, deck, covered porch, path and planting beds', exampleHint: "Recreate the venue's sample layout from the PDF" },
   townhall: { name: 'Town Hall', title: 'Town Hall Reception Planner', file: 'Basin Harbor – Town Hall', storageKey: 'wedding-layout-townhall-v1',
     plan: window.TOWN_HALL_PLAN, bbox: { x0: -2, y0: -3, x1: 95, y1: 47 }, view: { x0: -6, y0: -6, x1: 106, y1: 74 },     // Matterport raster extent; grid / export extent
     zones: [{ name: 'Town Hall', poly: TH_HALL, fill: [0xa58782, 0.18, 0x7b5a52] }, { name: 'Sun Porch', poly: TH_PORCH, fill: [0xb497a0, 0.18, 0x7b5a52] },
       { name: 'Deck (approx.)', poly: TH_DECK, fill: [0xb89b70, 0.85, 0x6b5232] }],
     nogo: () => TH_NOGO, build: buildTownHall, example: loadTownHallExample,
-    ground: [220, 180, 50, 34, 0xdfe5d2], sun: [10, 150, 90], shadow: 90, eye: [6, 62, 80], labelScale: 0.55, sky: 1.6,
+    ground: [220, 180, 50, 34, 0xdfe5d2], sun: [10, 150, 90], shadow: 90, eye: [6, 62, 80], labelScale: 0.55, sky: 1.6, bounce: 0xc4b2a6,
     siteHint: 'Walls, windows and doors, trusses and chandeliers, stairwell, and the rooms and deck around the hall',
     exampleHint: 'A sample reception: head table, dance floor, ten-seat rounds, bar, and cocktail tables on the porch and deck' },
 };
@@ -385,7 +387,7 @@ const scene = new THREE.Scene(); scene.background = new THREE.Color(0xdfe7ee);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.5, 3000);
 const CENTER = new THREE.Vector3((BBOX.x0 + BBOX.x1) / 2, 0, (BBOX.y0 + BBOX.y1) / 2);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x88a070, V.sky));
+scene.add(new THREE.HemisphereLight(0xffffff, V.bounce, V.sky));
 const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(...V.sun); sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = sun.shadow.camera.bottom = -V.shadow; sun.shadow.camera.right = sun.shadow.camera.top = V.shadow; sun.shadow.camera.far = 600; sun.shadow.bias = -0.0005;
 sun.target.position.copy(CENTER); scene.add(sun, sun.target);
@@ -473,6 +475,7 @@ const site = new THREE.Group(); scene.add(site);
 // through (x, z). Both are refreshed every frame.
 const overhead = new THREE.Group(); site.add(overhead);
 const cutaways = [];
+const insides = []; // { obj, x0, x1, z0, z1, y1 }: ceilings, shown only while the camera is inside that box
 function siteLabel(text, x, y, z, scale = 1) { const sp = makeSprite(text); sp.position.set(x, y, z); sp.scale.multiplyScalar(scale); sp.userData.isLabel = true; site.add(sp); }
 // Terrace Room: open-topped so you can see and place things inside. Built in local coordinates
 // (x across the 35 ft exit wall, z = depth) then rotated to sit on the porch wall line. Windows on the
@@ -564,17 +567,22 @@ function buildGardenSite() {
 }
 
 // Town Hall: open-topped walls with their windows, drapes and doors, the stained trusses on wall posts, three iron
-// chandeliers, the side bay behind its beam and post, the stairwell box, and the Sun Porch beyond. The restrooms, Board
-// Room and deck are drawn for orientation. Ceilings: hall 17 ft (venue figure), side bay and porch about 9 ft (photos).
+// chandeliers, the side bay behind its beam and post, the stairwell box, and the Sun Porch beyond, plus the entrance
+// porch outside the exit doors. The restrooms, Board Room and deck are drawn for orientation. The hall has a tray
+// ceiling: walls to the tie beams at about 13.4 ft, then slopes up to a flat 17 ft (venue figure) down the middle;
+// side bay and porch ceilings are about 9 ft (photos). Ceilings only appear while the camera is inside.
 function buildTownHall() {
   const white = M(0xf3f0e8), trim = M(0xffffff), wood = M(0x86663f), drapeMat = M(0x6f5b45), iron = M(0x2b2723), doorMat = M(0xfbfaf6),
+    brassBar = M(0xc9a55a, { metalness: 0.4, roughness: 0.4 }), blinds = M(0xe8e6df),
     glass = M(0xbfe0f0, { transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
-  const SILL = 2.5, HALL_H = 17, BAY_H = 9.5, PORCH_H = 9, T = 0.8;
+  const SILL = 2.5, HALL_H = 17, EAVE = 13.4, RUN = 8.6, BAY_H = 9.5, PORCH_H = 9, T = 0.8;
+  const ceilAt = z => Math.min(HALL_H, EAVE + (HALL_H - EAVE) * Math.min(z, TH_D - z) / RUN); // tray ceiling height across the hall
   // Wall along a -> b with the room on the right of that direction (on the left with flip), t thick, h high. Openings
-  // [s0, s1, kind, head] are measured from a: 'win' (glazed above the sill), 'door', 'glass' (glazed door) or 'open'.
-  // Below the sill the wall always shows; above it, it drops away while it stands between the camera and the room.
-  // ext = [before a, after b] lengthens the wall to close an outside corner.
-  function wall(a, b, h, t, { openings = [], flip = false, posts = [], drapes = false, pane = 3, ext = [0, 0] } = {}) {
+  // [s0, s1, kind, head] are measured from a: 'win' (glazed above the sill), 'door', 'glass' (glazed door), 'exit'
+  // (double doors with push bars, transoms and an EXIT sign) or 'open'. Below the sill the wall always shows; above it,
+  // it drops away while it stands between the camera and the room. ext = [before a, after b] lengthens the wall to close
+  // an outside corner; top = [[s, y], ...] are the corners of a top edge raised above h, between its ends at height h.
+  function wall(a, b, h, t, { openings = [], flip = false, posts = [], drapes = false, pane = 3, ext = [0, 0], top = null } = {}) {
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uz = (b[1] - a[1]) / len;
     const sg = flip ? -1 : 1, nx = sg * uz, nz = -sg * ux, ang = Math.atan2(-uz, ux); // n points out of the room
     const upper = new THREE.Group(); site.add(upper);
@@ -589,9 +597,16 @@ function buildTownHall() {
     let cur = -ext[0];
     for (const [s0, s1, kind, head = kind === 'win' ? 7.5 : 7] of [...openings].sort((p, q) => p[0] - q[0])) {
       split(cur, s0, 0, h, white); cur = s1;
-      const w = s1 - s0, n = Math.max(1, Math.round(w / pane));
-      piece(upper, s0, s1, head, h, white);                                                    // header
-      if (kind === 'win') {
+      const w = s1 - s0, n = Math.max(1, Math.round(w / pane)), mid = (s0 + s1) / 2;
+      const lintel = kind === 'exit' ? head + 2.1 : head;
+      piece(upper, s0, s1, lintel, h, white);                                                  // header
+      if (kind === 'exit') {
+        split(s0 + 0.15, s1 - 0.15, 0, head, doorMat, 0.25, 0.45); split(mid - 0.1, mid + 0.1, 0, lintel, trim, 0.2, 0.5);
+        for (const [b0, b1] of [[s0 + 0.5, mid - 0.4], [mid + 0.4, s1 - 0.5]]) piece(upper, b0, b1, 3.2, 3.4, brassBar, 0.05, 0.25); // push bars
+        piece(upper, s0, s1, head, head + 0.25, trim, 0.2, 0.5);
+        for (const [b0, b1] of [[s0 + 0.15, mid - 0.1], [mid + 0.1, s1 - 0.15]]) piece(upper, b0, b1, head + 0.25, lintel - 0.1, blinds, 0.3, 0.4); // transoms
+        piece(upper, mid - 0.5, mid + 0.5, lintel + 0.1, lintel + 0.6, M(0x2fbf5a, { emissive: 0x1d8f3f }), -0.2, 0); // EXIT sign
+      } else if (kind === 'win') {
         piece(site, s0, s1, 0, SILL, white); piece(upper, s0, s1, SILL, head, glass, 0.3, 0.4);
         for (let i = 0; i <= n; i++) piece(upper, s0 + w * i / n - 0.12, s0 + w * i / n + 0.12, SILL, head, trim, 0.2, 0.5);
         const tr = SILL + (head - SILL) * 0.62; piece(upper, s0, s1, tr, tr + 0.2, trim, 0.2, 0.5);
@@ -601,7 +616,7 @@ function buildTownHall() {
         split(s0 + 0.15, s1 - 0.15, 0, head, glass, 0.3, 0.4);
         for (const s of [s0 + 0.2, s1 - 0.2, ...(w > 4 ? [(s0 + s1) / 2] : [])]) split(s - 0.15, s + 0.15, 0, head, trim, 0.2, 0.5);
       }
-      if (drapes && kind !== 'door' && kind !== 'open') {
+      if (drapes && (kind === 'win' || kind === 'glass')) {
         const top = head + 1.2;
         piece(upper, s0 - 1.3, s0 - 0.1, 0, top, drapeMat, -0.45, -0.05); piece(upper, s1 + 0.1, s1 + 1.3, 0, top, drapeMat, -0.45, -0.05);
         piece(upper, s0 - 1.5, s1 + 1.5, head + 0.2, top + 0.3, drapeMat, -0.6, -0.05);      // valance
@@ -609,18 +624,24 @@ function buildTownHall() {
     }
     split(cur, len + ext[1], 0, h, white);
     for (const s of posts) split(s - 0.35, s + 0.35, 0, 12.5, wood, -0.45, 0);               // stained wall posts under the trusses
+    if (top) {                                                                                 // shaped top edge, extruded through the wall
+      const sh = new THREE.Shape([[-ext[0], h], ...top, [len + ext[1], h]].map(([s, y]) => new THREE.Vector2(s, y)));
+      const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: t, bevelEnabled: false }), white);
+      m.rotation.y = ang; m.position.set(a[0] + (sg > 0 ? nx * t : 0), 0, a[1] + (sg > 0 ? nz * t : 0)); upper.add(m); // extrusion runs along -n (+n with flip)
+    }
   }
   const { x0: sx0, x1: sx1, y: sy } = TH_STAIR;
   // Hall: four tall windows (golf course) between the truss posts; on the deck side a glazed door (the handicap entrance),
   // two windows and glazed double doors before the stairwell; the plain screen wall at the west end.
-  wall([0, 0], [sx1, 0], HALL_H, T, { openings: [17.5, 30.9, 45.9, 60.2].map(s => [s, s + 6, 'win', 10.5]), posts: TH_TRUSS, drapes: true, ext: [T, 0] });
-  wall([0, TH_D], [sx0, TH_D], HALL_H, T, { ext: [T, 0], flip: true, openings: [[6, 9, 'glass', 8], [18.5, 24.5, 'win', 10.5], [30.5, 37.5, 'win', 10.5], [43.5, 49.5, 'glass', 8]],
+  // The double doors by the stairwell are the exit doors to the entrance porch: push bars, transoms with blinds, EXIT sign.
+  wall([0, 0], [sx1, 0], EAVE, T, { openings: [17.5, 30.9, 45.9, 60.2].map(s => [s, s + 6, 'win', 10.5]), posts: TH_TRUSS, drapes: true, ext: [T, 0] });
+  wall([0, TH_D], [sx0, TH_D], EAVE, T, { ext: [T, 0], flip: true, openings: [[6, 9, 'glass', 8], [18.5, 24.5, 'win', 10.5], [30.5, 37.5, 'win', 10.5], [43.5, 49.5, 'exit']],
     posts: TH_TRUSS.filter(x => x < sx0), drapes: true });
-  wall([0, TH_D], [0, 0], HALL_H, T);
+  wall([0, TH_D], [0, 0], EAVE, T, { top: [[RUN, HALL_H], [TH_D - RUN, HALL_H]] });
   overhead.add(box(0.5, 0.5, 14, M(0xe6e6e6), 1.6, 14, TH_D / 2));                           // projector screen housing
-  // Stairwell box (stairs down to the Ranger Room), door on its hall face.
-  wall([sx0, sy], [sx1, sy], HALL_H, 0.6, { flip: true, openings: [[12.9, 15.9, 'door']], posts: [TH_TRUSS[3] - sx0] });
-  wall([sx0, sy], [sx0, TH_D], HALL_H, 0.6);
+  // Stairwell box (stairs down to the Ranger Room) up to the sloping ceiling, a door at each end of its hall face.
+  wall([sx0, sy], [sx1, sy], ceilAt(sy), 0.6, { flip: true, openings: [[1.6, 4.6, 'door'], [12.9, 15.9, 'door']], posts: [TH_TRUSS[3] - sx0] });
+  wall([sx0, sy], [sx0, TH_D], EAVE, 0.6, { top: [[0, ceilAt(sy)]] });
   wall([sx1, sy], [sx1, TH_D], BAY_H, 0.6, { flip: true });
   site.add(flatPoly(rectPoly(sx0, sy, sx1, TH_D), M(0x9a948a), 0.02));
   for (let x = sx0 + 3; x < sx1 - 2; x += 1.1) site.add(box(0.1, 0.02, TH_D - sy - 1.2, M(0x7d776d), x, 0.02, (sy + TH_D) / 2));
@@ -631,19 +652,31 @@ function buildTownHall() {
   wall([sx0, TH_D], [87.4, TH_D], BAY_H, 1.1, { flip: true, openings: [[21.9, 26.9, 'glass', 7.5]] });
   const beam = new THREE.Group(); site.add(beam);
   cutaways.push({ obj: beam, nx: -1, nz: 0, x: TH_BEAM, z: 0 });                              // drops away when looking into the bay from the hall
-  beam.add(box(sx1 - TH_BEAM, HALL_H - BAY_H, sy, white, (TH_BEAM + sx1) / 2, BAY_H, sy / 2));
+  const beamShape = new THREE.Shape([[0, BAY_H], [sy, BAY_H], [sy, ceilAt(sy)], [TH_D - RUN, HALL_H], [RUN, HALL_H], [0, EAVE]].map(([z, y]) => new THREE.Vector2(z, y)));
+  const beamWall = new THREE.Mesh(new THREE.ExtrudeGeometry(beamShape, { depth: sx1 - TH_BEAM, bevelEnabled: false }), white);
+  beamWall.rotation.y = -Math.PI / 2; beamWall.position.x = sx1; beam.add(beamWall);           // shape's x runs along +z, extruded toward -x
   for (const z of [3.7, 17.6]) { const p = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), M(0x4e7a3a)); p.position.set((TH_BEAM + sx1) / 2, BAY_H - 0.4, z); p.scale.set(1, 0.7, 1.3); beam.add(p); }
   site.add(box(0.75, BAY_H, 0.75, trim, TH_POST[0], 0, TH_POST[1]));
   // Sun Porch: windows round the deck sides with glazed doors to the outside stair and to the deck, a door to the Board Room.
   wall([57.8, 29.8], [57.8, 44.9], PORCH_H, T, { flip: true, openings: [[1.7, 4.7, 'glass'], [6.5, 14.6, 'win']], pane: 2.2 });
   wall([57.8, 44.9], [87.4, 44.9], PORCH_H, T, { flip: true, openings: [[0.8, 13.6, 'win'], [14.3, 17.3, 'glass'], [18, 28.8, 'win']], pane: 2.2, ext: [T, T] });
   wall([87.4, 29.8], [87.4, 44.9], PORCH_H, T, { openings: [[8.7, 11.7, 'door']], ext: [1.1, 0] });
-  // Trusses: tie beams at 12.5 ft with knee braces down to the wall posts.
+  // Trusses: tie beams at 12.5 ft with knee braces down to the wall posts and rafters up the slopes to the flat.
+  const slope = Math.atan2(HALL_H - EAVE, RUN), rafter = Math.hypot(HALL_H - EAVE, RUN);
   for (const x of TH_TRUSS) {
     const d = x > sx0 ? sy : TH_D;
     overhead.add(box(0.7, 0.9, d, wood, x, 12.5, d / 2));
     for (const [z, dir] of [[0, 1], [d, -1]]) { const br = box(0.45, 4.2, 0.45, wood); br.position.set(x, 11, z + dir * 1.9); br.rotation.x = dir * Math.PI / 4; overhead.add(br); }
+    for (const [z, dir] of [[0, 1], [TH_D, -1]]) { const r = box(0.6, 0.7, rafter, wood); r.position.set(x, (EAVE + HALL_H) / 2 - 0.4, z + dir * RUN / 2); r.rotation.x = -dir * slope; overhead.add(r); }
   }
+  // Ceilings, shown from inside: the hall's tray (two slopes and the flat), the bay's and the porch's flat ones.
+  const ceilMat = M(0xf4f2ec, { side: THREE.DoubleSide, emissive: 0x8f8b84 });
+  const quad = (pts, grp) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([0, 1, 2, 0, 2, 3].flatMap(i => pts[i]), 3)); g.computeVertexNormals(); grp.add(new THREE.Mesh(g, ceilMat)); };
+  const hallCeil = new THREE.Group(), porchCeil = new THREE.Group(); site.add(hallCeil, porchCeil);
+  for (const [z0, y0, z1, y1] of [[0, EAVE, RUN, HALL_H], [RUN, HALL_H, TH_D - RUN, HALL_H], [TH_D - RUN, HALL_H, TH_D, EAVE]]) quad([[0, y0, z0], [TH_BEAM, y0, z0], [TH_BEAM, y1, z1], [0, y1, z1]], hallCeil);
+  quad([[sx1, BAY_H, 0], [TH_BAY, BAY_H, 0], [TH_BAY, BAY_H, TH_D], [sx1, BAY_H, TH_D]], hallCeil);
+  quad([[57.8, PORCH_H, 29.8], [87.4, PORCH_H, 29.8], [87.4, PORCH_H, 44.9], [57.8, PORCH_H, 44.9]], porchCeil);
+  insides.push({ obj: hallCeil, x0: 0, x1: TH_BAY, z0: 0, z1: TH_D, y1: EAVE }, { obj: porchCeil, x0: 57.8, x1: 87.4, z0: 29.8, z1: 44.9, y1: PORCH_H });
   // Chandeliers, one per bay between the trusses: two rings of candle arms on a chain from the 17 ft ceiling.
   const brass = M(0xe9dcc0), flame = new THREE.MeshBasicMaterial({ color: 0xffe2a0 });
   for (let i = 0; i < 3; i++) {
@@ -659,21 +692,30 @@ function buildTownHall() {
       }
     }
   }
-  // Ceiling line round the hall.
-  const ceil = [[0, 0], [TH_BEAM, 0], [TH_BEAM, sy], [sx0, sy], [sx0, TH_D], [0, TH_D]].map(([x, z]) => new THREE.Vector3(x, HALL_H, z));
-  overhead.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(ceil), new THREE.LineBasicMaterial({ color: 0xb0aaa0 })));
-  // Around the hall: restrooms and the Board Room (not placeable), the steps from the porch door down to the deck, deck railing.
+  // Entrance porch outside the exit doors (street view): stone landing between the hall and the Sun Porch, steps down to
+  // the lawn, four tall columns and a gable roof. The roof and column tops drop away like a wall when they'd block the view.
+  const stone = M(0x8f9599), porchTop = new THREE.Group(); site.add(porchTop);
+  cutaways.push({ obj: porchTop, nx: 0, nz: 1, x: 0, z: TH_D });
+  site.add(flatPoly(rectPoly(41.5, TH_D + T, 57, 37.5), stone, 0.02));
+  site.add(flatPoly(rectPoly(45, 37.5, 51.5, 47), stone, 0.02));
+  for (let z = 38.6; z < 47; z += 1.4) site.add(box(6.5, 0.03, 0.1, M(0x6f7579), 48.25, 0.02, z));
+  for (const z of [37.6, 46.8]) site.add(box(0.12, 3, 0.12, iron, 51.6, 0, z));
+  const ironRail = box(9.2, 0.12, 0.12, iron, 51.6, 3, 42.2); ironRail.rotation.y = Math.PI / 2; site.add(ironRail);
+  for (const [x, z] of [[42.2, 30.6], [56.3, 30.6], [42.2, 37], [56.3, 37]]) { site.add(cyl(0.35, SILL, trim, x, 0, z, 16)); porchTop.add(cyl(0.35, 16 - SILL, trim, x, SILL, z, 16)); }
+  const pitch = Math.atan2(4.5, 8.2), slab = Math.hypot(4.5, 8.2) + 0.6;
+  for (const dir of [-1, 1]) { const r = box(slab, 0.4, 10, M(0x7a5e4a), 49.25 + dir * 4.1, 0, TH_D + 5); r.position.y = 18.1; r.rotation.z = -dir * pitch; porchTop.add(r); }
+  const pediment = new THREE.Mesh(new THREE.ExtrudeGeometry(new THREE.Shape([[41.1, 15.8], [57.4, 15.8], [49.25, 20.4]].map(([x, y]) => new THREE.Vector2(x, y))), { depth: 0.4, bevelEnabled: false }), white);
+  pediment.position.z = TH_D + 9.6; porchTop.add(pediment);                                  // gable front, flush with the roof's edge
+  porchTop.add(box(16.3, 0.2, 10, M(0x9fc3c9), 49.25, 15.6, TH_D + 5));                     // pale blue porch ceiling
+  // Around the hall: restrooms and the Board Room (not placeable), deck railing (open where the deck meets the buildings).
   const ctxMat = M(0xe2ded4), ctxLine = new THREE.LineBasicMaterial({ color: 0x9a948a });
   for (const [poly, label, lx, lz] of [[rectPoly(80.3, -0.8, 98, 17.5), 'Restrooms', 89, 8.5], [rectPoly(88.2, 29.8, 104, 53), 'Board Room', 96, 41]]) {
     site.add(flatPoly(poly, ctxMat, 0.005));
     site.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(poly.map(p => new THREE.Vector3(p[0], 0.03, p[1]))), ctxLine));
     siteLabel(label, lx, 3, lz, 0.8);
   }
-  const deckMat = M(0xb89b70);
-  site.add(flatPoly(rectPoly(69.8, 45.7, 79.3, TH_DECK[0][1]), deckMat, 0.012));
-  for (let z = 46.5; z < TH_DECK[0][1]; z += 1.1) site.add(box(9.5, 0.03, 0.08, M(0x8d7350), 74.55, 0.012, z));
   const railMat = M(0xffffff);
-  for (let i = 1; i < TH_DECK.length; i++) {                                                  // open along the building side
+  for (let i = 3; i < TH_DECK.length; i++) {                                                  // from the Board Room's corner round to the porch
     const p = TH_DECK[i], q = TH_DECK[(i + 1) % TH_DECK.length], len = Math.hypot(q[0] - p[0], q[1] - p[1]), n = Math.max(1, Math.round(len / 5));
     for (let k = 0; k <= n; k++) site.add(box(0.3, 3.3, 0.3, railMat, p[0] + (q[0] - p[0]) * k / n, 0, p[1] + (q[1] - p[1]) * k / n));
     const r = box(len, 0.25, 0.25, railMat, (p[0] + q[0]) / 2, 3.1, (p[1] + q[1]) / 2); r.rotation.y = Math.atan2(-(q[1] - p[1]), q[0] - p[0]); site.add(r);
@@ -681,8 +723,8 @@ function buildTownHall() {
   site.traverse(n => { if (n.isMesh) n.castShadow = false; });                                // indoors: only the furniture casts shadows
   siteLabel('Town Hall · 17 ft ceiling', 34, HALL_H + 2, 0, 1.2); siteLabel('Side bay · low ceiling', 75, BAY_H + 2, 0, 0.9);
   siteLabel('Stairs to Ranger Room', (sx0 + sx1) / 2, 4, (sy + TH_D) / 2, 0.7); siteLabel('Sun Porch', 72.6, 11, 37.3);
-  siteLabel('Handicap entrance', 7.5, 9.5, TH_D + 2, 0.6);
-  siteLabel('Steps', 74.5, 3, 49.5, 0.6); siteLabel('Deck (approx.)', 78, 5, 63); siteLabel('Golf course', 35, 4, -14, 1.2);
+  siteLabel('Handicap entrance', 7.5, 9.5, TH_D + 2, 0.6); siteLabel('Entrance porch', 49.25, 4, 34, 0.7);
+  siteLabel('Deck (approx.)', 78, 5, 60); siteLabel('Golf course', 35, 4, -14, 1.2);
 }
 V.build();
 
@@ -1071,7 +1113,7 @@ $('btn-png').onclick = () => {
   const ex = (VIEW.x0 + VIEW.x1) / 2, ez = (VIEW.y0 + VIEW.y1) / 2;
   ortho.position.set(ex, 500, ez); ortho.up.set(0, 0, -1); ortho.lookAt(ex, 0, ez);
   const helpersVis = selOutline.visible; selOutline.visible = rotRing.visible = rotKnob.visible = rotStem.visible = false;
-  overhead.visible = false; for (const c of cutaways) c.obj.visible = false; // plan view, as in Top-down; the next frame restores them
+  overhead.visible = false; for (const c of [...cutaways, ...insides]) c.obj.visible = false; // plan view, as in Top-down; the next frame restores them
   const oldBg = scene.background; scene.background = new THREE.Color(0xffffff);
   const size = new THREE.Vector2(); renderer.getSize(size); const pr = renderer.getPixelRatio();
   renderer.setPixelRatio(1); renderer.setSize(W, H, false); renderer.render(scene, ortho);
@@ -1145,6 +1187,7 @@ renderer.setAnimationLoop(() => {
   const cp = camera.position;
   const plan = controls.getPolarAngle() < 0.3;                      // looking (nearly) straight down: walls as low outlines, nothing overhead
   for (const c of cutaways) c.obj.visible = !plan && (cp.x - c.x) * c.nx + (cp.z - c.z) * c.nz < 0;
+  for (const r of insides) r.obj.visible = cp.x > r.x0 && cp.x < r.x1 && cp.z > r.z0 && cp.z < r.z1 && cp.y < r.y1;
   overhead.visible = !plan;
   renderer.render(scene, camera);
 });

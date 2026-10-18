@@ -65,7 +65,7 @@ the trees really are; the example layout drops seven at approximate spots.
 
 Sources: the Matterport tour (Basin Harbor – Town Hall, by Adirondack Drone) and its
 floor-plan view measurements, the venue's spec sheet (29' × 82' × 17' ceiling, 2,372 sq ft)
-and its schematic plan, and photos from the tour.
+and its schematic plan, photos from the tour, and street-view photos of the outside.
 
 Three placeable zones, each tallied separately in the Layout panel:
 
@@ -75,21 +75,28 @@ Three placeable zones, each tallied separately in the Layout panel:
   the Ranger Room is a 19'5" × 5' box let into the hall's deck-side corner. The four dark wall
   posts under the trusses are no-go spots too.
 - **Sun Porch** (29'3" × 15'): glazed doors from the side bay, windows on the deck sides, a
-  door down to the deck and one to the Board Room.
-- **Deck (approx.)**: not in the scan. Its outline is scaled from the venue's plan, which is
-  not drawn to scale, so treat it as a sketch until it is measured.
+  glazed door out to the deck, one to the entrance porch and one to the Board Room.
+- **Deck (approx.)**: not in the scan. It runs right along the Sun Porch windows and the front of
+  the Board Room, as the street view shows; the rest of its outline is scaled from the venue's
+  plan, which is not drawn to scale, so treat it as a sketch until it is measured.
 
 The **Site** checkbox draws the room around them: walls with the tall draped windows, glazed
-doors and doors; the stained trusses with knee braces; the three iron chandeliers; the
-projector screen housing; and the restrooms and Board Room for orientation. Walls are open at
-the top. Any wall standing between the camera and the room drops to sill height, so you can
-always see in, and you can orbit down to eye level inside. Looking straight down (Top-down, or
-Export PNG) shows every wall as a low outline and hides the trusses and chandeliers.
+doors and doors; the exit doors next to the stairwell (push bars, transoms, EXIT sign) out to
+the gabled entrance porch with its stone steps; the stained trusses with knee braces and
+rafters; the three iron chandeliers; the projector screen housing; and the restrooms and Board
+Room for orientation. The hall has a tray ceiling, as in the tour: walls up to the tie beams
+at about 13½ ft, then slopes rising to a flat 17 ft down the middle. Ceilings only appear when
+the camera is inside, so orbit down to eye level in the hall to see the room as a guest would.
+Otherwise walls are open at the top, and any wall (or the entrance porch roof) standing between
+the camera and the room drops to sill height, so you can always see in. Looking straight down
+(Top-down, or Export PNG) shows every wall as a low outline and hides the trusses and
+chandeliers.
 
 What is measured and what is estimated: the room outlines are from the tour's measurements
 (the 68'11", 49'11", 19'5", 28'8", 23'8", 10'3", 28'10", 9'7", 29'3", 14'10" and 15'3"
 dimensions). Door, window, truss, post and chandelier positions are read off the photos and the
-floor-plan view, to within a couple of feet. The side bay and porch ceiling heights (about
+floor-plan view, to within a couple of feet; the entrance porch's size and the 13½ ft eave of
+the tray ceiling are estimated from photos. The side bay and porch ceiling heights (about
 9 ft) are estimates; the 17 ft hall ceiling is the venue's figure.
 
 **Load example** sets up a reception for about 100. A head table sits at the screen wall with
