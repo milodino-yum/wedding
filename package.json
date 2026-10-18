@@ -1,6 +1,6 @@
 {
-  "name": "wedding-layout-planner",
-  "productName": "Wedding Layout Planner",
+  "name": "lets-party",
+  "productName": "Let’s Party",
   "version": "1.0.0",
   "description": "3D reception layout planner for Basin Harbor's Surprise Garden and Town Hall",
   "author": "milodino-yum",
@@ -17,7 +17,7 @@
     "electron": "44.9.0",
     "electron-builder": "26.15.3"
   },
-  "desktopName": "wedding-layout-planner.desktop",
+  "desktopName": "lets-party.desktop",
   "build": {
     "appId": "io.github.milodino-yum.wedding",
     "directories": {
@@ -32,7 +32,7 @@
       "desktop/main.js",
       "desktop/build/icon.png"
     ],
-    "artifactName": "Wedding-Layout-Planner-${version}-${os}-${arch}.${ext}",
+    "artifactName": "Lets-Party-${version}-${os}-${arch}.${ext}",
     "mac": {
       "target": [
         {
@@ -70,7 +70,8 @@
         }
       ],
       "category": "Graphics",
-      "syncDesktopName": true
+      "syncDesktopName": true,
+      "executableName": "lets-party"
     }
   }
 }

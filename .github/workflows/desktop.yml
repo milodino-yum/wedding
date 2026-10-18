@@ -38,7 +38,7 @@ jobs:
       - run: npx electron-builder ${{ matrix.target }} --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: Wedding-Layout-Planner-${{ runner.os }}
+          name: Lets-Party-${{ runner.os }}
           path: ${{ matrix.files }}
           if-no-files-found: error
           retention-days: 30
@@ -68,7 +68,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           target_commitish: ${{ github.sha }}
-          name: Wedding Layout Planner ${{ steps.version.outputs.tag }}
+          name: Let’s Party ${{ steps.version.outputs.tag }}
           files: installers/*
           body: |
             Download the file for your computer from **Assets** below, then:
@@ -76,13 +76,13 @@ jobs:
             **Mac** (`…-mac-universal.dmg`, for Apple silicon and Intel Macs)
             1. Double-click the downloaded file. A window opens showing the app.
             2. Drag the app onto the Applications folder in that window.
-            3. Open your Applications folder and double-click **Wedding Layout Planner**.
+            3. Open your Applications folder and double-click **Let’s Party**.
             4. The first time only, macOS says it can't verify the app. Click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway**, then **Open**. From then on it opens normally.
 
             **Windows** (`…-win-x64.exe`)
             1. Double-click the downloaded file.
             2. If you see "Windows protected your PC", click **More info**, then **Run anyway**.
-            3. Follow the installer. It adds **Wedding Layout Planner** to the Start menu.
+            3. Follow the installer. It adds **Let’s Party** to the Start menu.
 
             **Linux** (`…-linux-x86_64.AppImage`): make the file executable, then run it.
 

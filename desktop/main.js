@@ -48,8 +48,8 @@ function buildMenu() {
     ] },
     { role: 'windowMenu' },
     { role: 'help', submenu: [
-      { label: 'About Wedding Layout Planner', click: () => dialog.showMessageBox(win, {
-        type: 'info', title: 'About', message: `Wedding Layout Planner ${app.getVersion()}`,
+      { label: `About ${app.getName()}`, click: () => dialog.showMessageBox(win, {
+        type: 'info', title: 'About', message: `${app.getName()} ${app.getVersion()}`,
         detail: 'Reception layouts for Basin Harbor\'s Surprise Garden and Town Hall.\nLayouts autosave in this app; use Save Layout to keep a file.',
       }) },
     ] },

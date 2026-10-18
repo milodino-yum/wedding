@@ -1,6 +1,6 @@
-# Basin Harbor Reception Layout Planner
+# Let’s Party
 
-A single-page, browser-based 3D layout planner for two Basin Harbor reception spaces: the
+A single-page, browser-based 3D wedding layout planner for two Basin Harbor reception spaces: the
 outdoor **Surprise Garden** and the indoor **Town Hall**. No backend, no build step.
 
 Pick the venue in the header. Each venue is its own page (`index.html?venue=garden` or
@@ -40,10 +40,10 @@ lists the install steps. GitHub also builds them whenever the planner changes (w
 `Desktop app`, also runnable by hand from the Actions tab); those builds sit under each run's
 artifacts:
 
-- macOS: `Wedding-Layout-Planner-…-mac-universal.dmg` (Apple silicon and Intel). Open it and drag the
+- macOS: `Lets-Party-…-mac-universal.dmg` (Apple silicon and Intel). Open it and drag the
   app to Applications.
-- Windows: `Wedding-Layout-Planner-…-win-x64.exe`, a setup program.
-- Linux: `Wedding-Layout-Planner-…-linux-x86_64.AppImage`; make it executable and run it.
+- Windows: `Lets-Party-…-win-x64.exe`, a setup program.
+- Linux: `Lets-Party-…-linux-x86_64.AppImage`; make it executable and run it.
 
 To publish a new release, raise `version` in `package.json` and push: the first build of each version (or of a pushed `v*` tag) publishes a release with the three installers.
 

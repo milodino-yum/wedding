@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wedding Layout Planner — Basin Harbor</title>
+<title>Let’s Party</title>
 <style>
   :root {
     --bg: #f5f4f0; --panel: #ffffff; --line: #ddd8cf; --ink: #2b2a27; --muted: #7a766e;
@@ -66,7 +66,7 @@
 <body>
 <div id="app">
   <header>
-    <h1 id="title">Reception Planner</h1>
+    <h1 id="title">Let’s Party</h1>
     <select id="sel-venue" title="Venue (each keeps its own layout)"></select>
     <span class="sep"></span>
     <button id="btn-top" title="Straight-down view (T)">Top-down</button>
@@ -235,13 +235,13 @@ const polyArea = poly => Math.abs(poly.reduce((a, p, i) => { const q = poly[(i +
 // from below (lawn, carpet); eye = default camera
 // offset from the plan's centre; labelScale sizes labels to the venue.
 const VENUES = {
-  garden: { name: 'Surprise Garden', title: 'Garden Reception Planner', file: 'Basin Harbor – Surprise Garden', storageKey: 'wedding-layout-v1',
+  garden: { name: 'Surprise Garden', file: 'Basin Harbor – Surprise Garden', storageKey: 'wedding-layout-v1',
     plan: window.PLAN_IMAGE, bbox: { x0: -2, y0: -2, x1: 170, y1: 286 }, view: { x0: -38, y0: -2, x1: 170, y1: 286 }, // PDF raster extent; grid / export extent
     zones: [{ name: 'Garden', poly: ROOM, fill: [0x9dcf7f, 0.35, 0x2f6b2a] }, { name: 'Terrace Room', poly: TERRACE }],
     nogo: () => NOGO, build: buildGardenSite, example: loadGardenExample,
     ground: [400, 500, 90, 140, 0xecebe4], sun: [120, 220, 60], shadow: 180, eye: [40, 200, 260], labelScale: 1, sky: 0.9, bounce: 0x88a070,
     siteHint: 'Lodge, deck, covered porch, path and planting beds', exampleHint: "Recreate the venue's sample layout from the PDF" },
-  townhall: { name: 'Town Hall', title: 'Town Hall Reception Planner', file: 'Basin Harbor – Town Hall', storageKey: 'wedding-layout-townhall-v1',
+  townhall: { name: 'Town Hall', file: 'Basin Harbor – Town Hall', storageKey: 'wedding-layout-townhall-v1',
     plan: window.TOWN_HALL_PLAN, bbox: { x0: -2, y0: -3, x1: 95, y1: 47 }, view: { x0: -6, y0: -6, x1: 106, y1: 74 },     // Matterport raster extent; grid / export extent
     zones: [{ name: 'Town Hall', poly: TH_HALL, fill: [0xa58782, 0.18, 0x7b5a52] }, { name: 'Sun Porch', poly: TH_PORCH, fill: [0xb497a0, 0.18, 0x7b5a52] },
       { name: 'Deck (approx.)', poly: TH_DECK, fill: [0xb89b70, 0.85, 0x6b5232] }],
@@ -1081,7 +1081,7 @@ $('dlg-custom').addEventListener('close', () => {
 // Persistence
 // ---------------------------------------------------------------------------
 // Venue switcher: each venue is its own page load (?venue=...) with its own autosave.
-$('title').textContent = V.title; document.title = 'Wedding Layout Planner — ' + V.file;
+document.title = 'Let’s Party — ' + V.name;
 $('lbl-site').title = V.siteHint; $('btn-example').title = V.exampleHint;
 for (const [id, v] of Object.entries(VENUES)) $('sel-venue').add(new Option(v.name, id, false, id === VENUE_ID));
 function switchVenue(id) { try { localStorage.setItem('wedding-venue', id); } catch (e) { /* storage unavailable */ } location.search = '?venue=' + id; }
