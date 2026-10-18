@@ -45,7 +45,7 @@ artifacts:
 - Windows: `Wedding-Layout-Planner-…-win-x64.exe`, a setup program.
 - Linux: `Wedding-Layout-Planner-…-linux-x86_64.AppImage`; make it executable and run it.
 
-Pushing a `v*` tag (e.g. `v1.0.1`, after raising `version` in `package.json`) publishes a release with the three installers.
+To publish a new release, raise `version` in `package.json` and push: the first build of each version (or of a pushed `v*` tag) publishes a release with the three installers.
 
 The installers are not signed with an Apple or Microsoft developer certificate, so the first
 launch needs one extra step:
