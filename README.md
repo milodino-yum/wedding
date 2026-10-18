@@ -151,11 +151,13 @@ tables on the Sun Porch, and four cocktail tables out on the deck.
 | --- | --- |
 | Add object | click it in the left palette (lands at the centre of the current view) |
 | Select | click it |
-| Move | drag on the ground, or arrow keys (Shift = 4× step) |
+| Move | drag on the ground, or Shift + arrow keys (one snap step) |
 | Rotate | drag the orange knob, `R` / `Shift+R`, or type degrees in the panel; the step (1°, 5°, 15°, 45°, default 5°) is set in the header and also snaps the knob when Snap is on |
 | Delete | `Delete` or `Backspace` |
 | Duplicate | `Ctrl/Cmd+D` |
-| Orbit / pan / zoom | left-drag on empty ground / right-drag / wheel |
+| Move around | arrow keys (hold to keep going), along the plan's north/south/east/west: up is whichever of those is nearest the top of the screen (north in the default and top-down views) |
+| Tilt | ⌘ + scroll (Ctrl + scroll on Windows and Linux), from overhead down to eye level |
+| Orbit / pan / zoom | left-drag on empty ground / right-drag / scroll |
 | Top-down view | `T` or the Top-down button; Reset view restores the 3/4 view |
 | Snap to grid | header toggle, 3 in / 6 in / 1 ft / 2 ft (default 6 in) |
 

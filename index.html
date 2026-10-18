@@ -119,7 +119,7 @@
 
   <div id="viewport">
     <div id="hud"></div>
-    <div id="hint">Click an item on the left to add it. Drag objects to move, drag the orange knob or press <kbd>R</kbd> to rotate (step in the header), <kbd>Del</kbd> deletes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, arrows nudge. Orbit: left-drag on empty space · Pan: right-drag · Zoom: wheel.</div>
+    <div id="hint">Click an item on the left to add it. Drag objects to move, drag the orange knob or press <kbd>R</kbd> to rotate (step in the header), <kbd>Del</kbd> deletes, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplicates, <kbd>Shift</kbd>+arrows nudge. Move around: arrow keys · Tilt: <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+scroll · Zoom: scroll · Orbit: left-drag on empty space · Pan: right-drag.</div>
     <div id="toast"></div>
     <div id="err"></div>
   </div>
@@ -765,6 +765,17 @@ const canvas = renderer.domElement;
 canvas.addEventListener('pointerdown', onPointerDown);
 window.addEventListener('pointermove', onPointerMove);
 window.addEventListener('pointerup', onPointerUp);
+// ⌘ + scroll (Ctrl + scroll off the Mac, where Ctrl + scroll is a trackpad pinch) tilts the view between overhead and eye
+// level; plain scroll still zooms. Also registered ahead of OrbitControls, so it can keep the wheel from zooming.
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+canvas.addEventListener('wheel', e => {
+  if (!(e.metaKey || (!IS_MAC && e.ctrlKey))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
+  const sph = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));
+  sph.phi = THREE.MathUtils.clamp(sph.phi - dy * 0.002, 0.05, controls.maxPolarAngle); // scrolling down tilts toward overhead
+  camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph)); controls.update();
+}, { passive: false });
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.12; controls.screenSpacePanning = false;
 controls.maxPolarAngle = Math.PI / 2 - 0.03; controls.minDistance = 4; controls.maxDistance = 900;
@@ -1038,23 +1049,43 @@ function snapSize() { return parseFloat(ui.snapSize.value) || 0.5; }
 function rotStep() { return parseFloat(ui.rotStep.value) || 5; }
 function snapV(v) { if (!ui.snap.checked) return Math.round(v * 100) / 100; const s = snapSize(); return Math.round(v / s) * s; }
 
-// Keyboard
+// Keyboard. Arrow keys move the view (see moveView); Shift + arrows nudge the selected object one snap step.
+const held = new Set();
 window.addEventListener('keydown', e => {
   const tag = (e.target.tagName || '').toLowerCase(); if (tag === 'input' || tag === 'select' || tag === 'textarea' || $('dlg-custom').open) return;
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'd') { e.preventDefault(); if (selected) duplicate(selected); return; }
   if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); saveJSON(); return; }
+  if (k.startsWith('arrow') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    if (!e.shiftKey) { held.add(k); return; }
+    if (!selected) return;
+    const s = snapSize(), o = selected;
+    const dx = k === 'arrowleft' ? -s : k === 'arrowright' ? s : 0, dz = k === 'arrowup' ? -s : k === 'arrowdown' ? s : 0;
+    moveTo(o, snapV(o.x + dx), snapV(o.z + dz)); updateSelectionHelpers(); refreshInspector(); changed(); return;
+  }
   if (!selected) { if (k === 't') topView(); else if (k === 'home') resetView(); return; }
   if (k === 'delete' || k === 'backspace') { e.preventDefault(); removeObject(selected); }
   else if (k === 'r') { e.preventDefault(); setRotation(selected, selected.rot + (e.shiftKey ? -rotStep() : rotStep())); }
   else if (k === 'escape') select(null);
-  else if (k.startsWith('arrow')) {
-    e.preventDefault(); const s = e.shiftKey ? snapSize() * 4 : snapSize(); const o = selected;
-    const dx = k === 'arrowleft' ? -s : k === 'arrowright' ? s : 0, dz = k === 'arrowup' ? -s : k === 'arrowdown' ? s : 0;
-    moveTo(o, snapV(o.x + dx), snapV(o.z + dz)); updateSelectionHelpers(); refreshInspector(); changed();
-  }
   else if (k === 't') topView();
 });
+window.addEventListener('keyup', e => held.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => held.clear());
+// While arrow keys are held the view glides over the ground along the plan's compass directions: up/down go whichever of
+// north, south, east or west is nearest the top/bottom of the screen (north/south in the default and top-down views),
+// left/right go the matching cross directions; faster the further out the camera is.
+const fwd = new THREE.Vector3(), side = new THREE.Vector3(), step = new THREE.Vector3();
+function moveView(dt) {
+  camera.getWorldDirection(fwd); fwd.add(step.set(0, 1, 0).applyQuaternion(camera.quaternion)); fwd.y = 0; // screen-up on the ground, also when looking straight down
+  if (fwd.lengthSq() < 1e-8) return;
+  if (Math.abs(fwd.x) > Math.abs(fwd.z)) fwd.set(Math.sign(fwd.x), 0, 0); else fwd.set(0, 0, Math.sign(fwd.z));
+  side.set(-fwd.z, 0, fwd.x);
+  const f = held.has('arrowup') - held.has('arrowdown'), r = held.has('arrowright') - held.has('arrowleft');
+  const d = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) * 0.6, 8, 400) * dt;
+  step.copy(fwd).multiplyScalar(f * d).addScaledVector(side, r * d);
+  camera.position.add(step); controls.target.add(step);
+}
 
 // ---------------------------------------------------------------------------
 // Palette
@@ -1203,7 +1234,10 @@ try { const raw = localStorage.getItem(LS_KEY); if (raw) { loadData(JSON.parse(r
 if (!restored) { changed(); }
 applyToggles(); refreshStats();
 
+let lastFrame = performance.now();
 renderer.setAnimationLoop(() => {
+  const now = performance.now(), dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
+  if (held.size) moveView(dt);
   controls.update();
   const cp = camera.position;
   const plan = controls.getPolarAngle() < 0.3;                      // looking (nearly) straight down: walls as low outlines, nothing overhead

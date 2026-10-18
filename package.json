@@ -1,7 +1,7 @@
 {
   "name": "lets-party",
   "productName": "Let’s Party",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "3D reception layout planner for Basin Harbor's Surprise Garden and Town Hall",
   "author": "milodino-yum",
   "private": true,
