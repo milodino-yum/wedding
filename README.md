@@ -1,7 +1,11 @@
-# Garden Reception Layout Planner
+# Basin Harbor Reception Layout Planner
 
-A single-page, browser-based 3D layout planner for the Basin Harbor "Surprise Garden"
-reception space. No backend, no build step.
+A single-page, browser-based 3D layout planner for two Basin Harbor reception spaces: the
+outdoor **Surprise Garden** and the indoor **Town Hall**. No backend, no build step.
+
+Pick the venue in the header. Each venue is its own page (`index.html?venue=garden` or
+`index.html?venue=townhall`) and keeps its own autosaved layout; opening the page without
+`?venue` brings back the last one used.
 
 ## Run it
 
@@ -19,9 +23,15 @@ python3 -m http.server 8000
 - `index.html` – the whole app (all CSS and JS inline).
 - `vendor/three.bundle.js` – Three.js 0.170 plus OrbitControls, bundled into one classic
   script so the page runs from `file://` without a server or a CDN (MIT, see `vendor/THREE-LICENSE`).
-- `plan-image.js` – the venue floor plan from the PDF, embedded as a base64 WebP and
+- `plan-image.js` – the garden floor plan from the PDF, embedded as a base64 WebP and
   scaled from the plan's 20 ft bar (6 px per foot). Shown under the grid; toggle with
   the "Floor plan" checkbox.
+- `town-hall-plan.js` – the Town Hall floor from the Matterport tour's floor-plan view, as a
+  base64 WebP (12 px per foot): turned to match the venue's plan, levelled, scaled from the
+  measured 68'11" wall, with the scanned chairs and the measurement overlay painted out so the
+  real carpet shows under your layout.
+
+## Surprise Garden
 
 The room boundary is a polygon traced from the PDF (deck edge, garden, curved walkway
 and the lower lawn). Objects are clamped so their footprint, chairs included, stays inside it.
@@ -51,6 +61,42 @@ Depths and heights are estimates from the photos; the PDF gives the positions. M
 trees are regular palette objects (footprint = trunk only) so you can move them to where
 the trees really are; the example layout drops seven at approximate spots.
 
+## Town Hall
+
+Sources: the Matterport tour (Basin Harbor – Town Hall, by Adirondack Drone) and its
+floor-plan view measurements, the venue's spec sheet (29' × 82' × 17' ceiling, 2,372 sq ft)
+and its schematic plan, and photos from the tour.
+
+Three placeable zones, each tallied separately in the Layout panel:
+
+- **Town Hall** (about 2,180 sq ft of floor): the 68'11" × 28'8" hall plus the 10'3" side bay
+  at its east end. The bay has a lower ceiling behind a beam carried on a single post (a
+  no-go spot), restroom doors, and an alcove to the Board Room corridor. The stairwell down to
+  the Ranger Room is a 19'5" × 5' box let into the hall's deck-side corner. The four dark wall
+  posts under the trusses are no-go spots too.
+- **Sun Porch** (29'3" × 15'): glazed doors from the side bay, windows on the deck sides, a
+  door down to the deck and one to the Board Room.
+- **Deck (approx.)**: not in the scan. Its outline is scaled from the venue's plan, which is
+  not drawn to scale, so treat it as a sketch until it is measured.
+
+The **Site** checkbox draws the room around them: walls with the tall draped windows, glazed
+doors and doors; the stained trusses with knee braces; the three iron chandeliers; the
+projector screen housing; and the restrooms and Board Room for orientation. Walls are open at
+the top. Any wall standing between the camera and the room drops to sill height, so you can
+always see in, and you can orbit down to eye level inside. Looking straight down (Top-down, or
+Export PNG) shows every wall as a low outline and hides the trusses and chandeliers.
+
+What is measured and what is estimated: the room outlines are from the tour's measurements
+(the 68'11", 49'11", 19'5", 28'8", 23'8", 10'3", 28'10", 9'7", 29'3", 14'10" and 15'3"
+dimensions). Door, window, truss, post and chandelier positions are read off the photos and the
+floor-plan view, to within a couple of feet. The side bay and porch ceiling heights (about
+9 ft) are estimates; the 17 ft hall ceiling is the venue's figure.
+
+**Load example** sets up a reception for about 100. A head table sits at the screen wall with
+the dance floor and DJ in front of it. Eight 72" rounds of ten fill the rest of the hall, kept
+clear of the doors. The bar and cake go in the side bay, escort cards, gifts and cocktail
+tables on the Sun Porch, and four cocktail tables out on the deck.
+
 ## Controls
 
 | Action | How |
@@ -73,12 +119,15 @@ seat count; a ceremony chair row grows with its seat count and is tallied separa
 
 ## Saving
 
-- Autosave to `localStorage` on every change; reopening the page restores the last layout.
-- **Save JSON / Load JSON** download or upload the layout as a file.
+- Autosave to `localStorage` on every change, per venue; reopening the page restores the last layout.
+- **Save JSON / Load JSON** download or upload the layout as a file. The file records its
+  venue; loading a file made for the other venue offers to switch to it and opens it there.
+  Files saved before the Town Hall was added are garden layouts.
 - **Export PNG** renders a straight-down orthographic image of the whole venue.
-- **Load example** recreates the sample layout drawn in the venue's PDF (8 rounds, three
-  rows of 8' banquet tables, bar + back bar, cocktail tables, uplights, lanterns, the eight
-  coloured Adirondack chairs and approximate tree positions).
+- **Load example**, in the garden, recreates the sample layout drawn in the venue's PDF
+  (8 rounds, three rows of 8' banquet tables, bar + back bar, cocktail tables, uplights,
+  lanterns, the eight coloured Adirondack chairs and approximate tree positions). In the
+  Town Hall, it loads the sample reception described above.
 
 ## Rebuilding the vendor bundle
 
