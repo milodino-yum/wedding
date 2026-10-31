@@ -29,7 +29,7 @@
     "EMAIL_FROM": "Clan Destiny <stories@clandestiny.us>"
   }
 
-  // Set these as secrets, not here (this repository is public):
+  // Set these as secrets in Cloudflare, never in this file:
   //   npx wrangler secret put ADMIN_EMAILS     comma-separated; can sign in without
   //                                            an invite and become admins
   //   npx wrangler secret put RESEND_API_KEY   for sending sign-in emails

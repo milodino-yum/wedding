@@ -80,12 +80,11 @@ tables on the first visit after a deploy.
    Cloudflare → *DNS*), and wait for *Verified*. Then *API Keys → Create API
    key* with *Sending access* for `clandestiny.us`. Copy the key somewhere safe
    for step 4; Resend shows it only once.
-3. **Connect GitHub.** Cloudflare → *Workers & Pages → Create → Import a
-   repository* → connect GitHub and pick this repository.
+3. **Connect GitHub.** Cloudflare → *Workers & Pages → Create application →
+   Import a repository* → connect GitHub and pick the `clandestiny` repository.
    - Project name: `clandestiny` (it must match `name` in `wrangler.jsonc`).
-   - Production branch: the branch holding this code.
-   - Root directory: the folder holding `wrangler.jsonc` (`family-history`
-     while the code lives in the wedding repository).
+   - Production branch `main` and an empty root directory are the defaults, which
+     is what this repository needs.
    - Leave the build command empty and the deploy command as `npx wrangler deploy`.
 4. **Add the secrets.** Worker → *Settings → Variables and Secrets → Add*, type
    *Secret*:
@@ -123,11 +122,11 @@ point-in-time history ("Time Travel").
 
 ## Keeping family data private
 
-- **Never commit** the Ancestry export (`.ged`), the family history document,
-  photos, or anything about living relatives to this repository: **it is
-  public**. `.gitignore` already blocks `*.ged` files and a `private/` folder;
-  keep source material there or outside the repo. The real data lives only in
-  the Cloudflare D1 database.
+- **Don't commit** the Ancestry export (`.ged`), the family history documents,
+  photos, or anything about living relatives, even though the repository is
+  private: repositories get shared, forked and made public by accident.
+  `.gitignore` already blocks `*.ged` files and a `private/` folder. The real data
+  lives only in the Cloudflare D1 database.
 - Living people are flagged (`is_living`) so we can decide how much of their
   details to show before launch.
 
