@@ -8,6 +8,8 @@ export default defineConfig(async () => {
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc" },
         miniflare: {
+          // An empty database for testing the migration runner from scratch.
+          d1Databases: ["FRESH_DB"],
           bindings: {
             TEST_MIGRATIONS: migrations,
             DEV_MODE: "true",

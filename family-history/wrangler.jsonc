@@ -1,9 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "family-history",
+  "name": "clandestiny",
   "main": "src/index.tsx",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+
+  // Bundle migrations/*.sql as text so the Worker can apply them itself (src/migrate.ts).
+  "rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
 
   // CSS, icons and other public files. Served without sign-in, so never put
   // family data or photos here (those will live in R2 behind the login).
@@ -12,8 +15,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "family-history",
-      // Run `npx wrangler d1 create family-history` once and paste the ID here.
+      "database_name": "clandestiny",
+      // The ID of the D1 database created in the Cloudflare dashboard.
       // "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
@@ -23,7 +26,7 @@
     // Shown in the header, page titles and emails.
     "SITE_NAME": "Clan Destiny",
     // Who sign-in emails come from. The domain must be verified in Resend.
-    "EMAIL_FROM": "Family History <stories@example.com>"
+    "EMAIL_FROM": "Clan Destiny <stories@clandestiny.us>"
   }
 
   // Set these as secrets, not here (this repository is public):

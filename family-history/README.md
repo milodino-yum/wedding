@@ -44,7 +44,7 @@ Sign in with the address you put in `ADMIN_EMAILS`. In development no email is
 sent: the sign-in link appears on the "Check your email" page instead.
 
 ```bash
-npm test          # 27 tests, run inside the real Workers runtime
+npm test          # runs inside the real Workers runtime
 npm run typecheck
 ```
 
@@ -54,35 +54,41 @@ Hosting is [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 with a [D1](https://developers.cloudflare.com/d1/) (SQLite) database. At family
 scale this fits in Cloudflare's free plan, and unlike some free tiers it doesn't
 go to sleep when nobody has visited for a while. Sign-in email goes through
-[Resend](https://resend.com) (the free tier is 3,000 emails a month).
+[Resend](https://resend.com) (the free tier is 3,000 emails a month). The site
+lives at **clandestiny.us**.
 
-1. **Make a Cloudflare account** at dash.cloudflare.com.
-2. **Buy the domain** under *Domain Registration → Register Domains*. Cloudflare
-   sells domains at cost and includes WHOIS privacy. Pick something short that
-   is easy to say out loud to a grandparent, with no hyphens.
-3. **Create the database** and paste the ID it prints into `wrangler.jsonc`:
-   ```bash
-   npx wrangler login
-   npx wrangler d1 create family-history
-   npm run db:migrate:remote
-   ```
-4. **Set up email.** Make a Resend account, add your domain under *Domains*,
-   and click *Auto configure* (or copy its DNS records into Cloudflare). Then set
-   `EMAIL_FROM` in `wrangler.jsonc` to an address on that domain, e.g.
-   `Family History <stories@yourdomain.com>`.
-5. **Set the secrets.** This repository is public, so these never go in a file:
-   ```bash
-   npx wrangler secret put ADMIN_EMAILS      # your email address
-   npx wrangler secret put RESEND_API_KEY    # from resend.com → API Keys
-   ```
-6. **Check the name** in `wrangler.jsonc` (`SITE_NAME`, currently "Clan Destiny"), then deploy:
-   ```bash
-   npm run deploy
-   ```
-7. **Attach the domain.** In the Cloudflare dashboard, go to *Workers & Pages →
-   family-history → Settings → Domains & Routes → Add → Custom domain*.
-8. **Sign in** with your admin address, fill in your profile, and make invites
-   from the Admin page.
+Everything below happens in web dashboards; no terminal needed. Cloudflare
+deploys straight from GitHub, so every change pushed to the production branch
+goes live a minute or two later. The site creates and updates its own database
+tables on the first visit after a deploy.
+
+1. **Create the database.** Cloudflare dashboard → *Storage & databases → D1
+   SQL database → Create*. Name it `clandestiny`. Copy its *Database ID* into
+   `database_id` in `wrangler.jsonc` (it's an identifier, not a secret).
+2. **Set up email.** Resend → *Domains → Add domain* → `clandestiny.us`. Let it
+   configure Cloudflare DNS automatically (or copy the records it lists into
+   Cloudflare → *DNS*), and wait for *Verified*. Then *API Keys → Create API
+   key* with *Sending access* for `clandestiny.us`. Copy the key somewhere safe
+   for step 4; Resend shows it only once.
+3. **Connect GitHub.** Cloudflare → *Workers & Pages → Create → Import a
+   repository* → connect GitHub and pick this repository.
+   - Project name: `clandestiny` (it must match `name` in `wrangler.jsonc`).
+   - Production branch: the branch holding this code.
+   - Root directory: the folder holding `wrangler.jsonc` (`family-history`
+     while the code lives in the wedding repository).
+   - Leave the build command empty and the deploy command as `npx wrangler deploy`.
+4. **Add the secrets.** Worker → *Settings → Variables and Secrets → Add*, type
+   *Secret*:
+   - `ADMIN_EMAILS`: your email address (comma-separate several admins)
+   - `RESEND_API_KEY`: the key from step 2
+5. **Attach the domain.** Worker → *Settings → Domains & Routes → Add → Custom
+   domain* → `clandestiny.us`. Repeat for `www.clandestiny.us`; the site sends
+   www visitors to the main address.
+6. **Sign in** at https://clandestiny.us with your admin address, fill in your
+   profile, and make invites from the Admin page.
+
+Prefer the terminal? `npx wrangler login`, then `npm run deploy` does the same
+deploy from your own computer, and `npx wrangler secret put NAME` sets secrets.
 
 Back up the live database whenever you like with `npm run db:backup`. It writes
 a `.sql` file to `backups/`, which is git-ignored. D1 also keeps its own
@@ -140,6 +146,7 @@ migrations/      database schema (D1 / SQLite)
 seed/            fictional sample family for local development only
 src/index.tsx    app setup: security headers, CSRF, sessions, routes
 src/auth.ts      sessions, one-time links, sign-in middleware
+src/migrate.ts   applies migrations/ to the database on the first request
 src/routes/      sign-in/join flow; people, stories, profiles, admin
 src/views/       server-rendered pages (Hono JSX)
 src/db.ts        queries

@@ -4,12 +4,29 @@ import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 import type { AppEnv } from "./types";
 import { loadUser } from "./auth";
+import { ensureMigrated } from "./migrate";
 import { authRoutes } from "./routes/auth";
 import { appRoutes, homePage } from "./routes/app";
 import { render } from "./views/layout";
 import { Landing } from "./views/auth";
 
 const app = new Hono<AppEnv>();
+
+// www.clandestiny.us -> clandestiny.us, so everyone shares one address (and one sign-in).
+app.use(async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.hostname.startsWith("www.")) {
+    url.hostname = url.hostname.slice(4);
+    return c.redirect(url.toString(), 301);
+  }
+  await next();
+});
+
+// Creates or updates the database tables on the first request after a deploy.
+app.use(async (c, next) => {
+  await ensureMigrated(c.env.DB);
+  await next();
+});
 
 app.use(
   secureHeaders({
