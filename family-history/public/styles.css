@@ -246,3 +246,21 @@ tr.highlight td { background: var(--highlight); }
   .card { padding: 18px; }
   .story-actions { margin-left: 0; }
 }
+
+/* --- Life events --- */
+
+.timeline-section { margin: 8px 0 28px; }
+.timeline { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
+.timeline li { display: grid; grid-template-columns: 4.2em 1fr; gap: 12px; padding: 6px 0 6px 14px; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -6px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.timeline-when { font-family: var(--sans); font-size: .85rem; color: var(--muted); padding-top: 3px; }
+.timeline-details { display: block; color: var(--muted); font-size: .9rem; white-space: pre-line; }
+
+/* --- Import --- */
+
+.import-stats { display: grid; grid-template-columns: max-content 1fr; gap: 4px 20px; margin: 0 0 12px; }
+.import-stats dt { font-family: var(--sans); font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: 4px; }
+.import-stats dd { margin: 0; }
+.progress { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 16px 0; }
+.progress-bar { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .9em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }

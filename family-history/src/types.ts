@@ -28,6 +28,8 @@ export type Person = {
   gedcom_xref: string | null;
   given_names: string | null;
   surname: string | null;
+  suffix: string | null;
+  alt_names: string | null;
   nickname: string | null;
   sex: "M" | "F" | "U" | null;
   birth_date: string | null;
@@ -38,6 +40,17 @@ export type Person = {
   death_place: string | null;
   is_living: number;
   summary: string | null;
+};
+
+export type LifeEvent = {
+  id: number;
+  person_id: string;
+  kind: string;
+  label: string;
+  date: string | null;
+  year: number | null;
+  place: string | null;
+  details: string | null;
 };
 
 export type Invite = {

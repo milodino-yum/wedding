@@ -27,14 +27,14 @@ describe("self-migration", () => {
   it("builds an empty database, once, even when requests race", async () => {
     const db = env.FRESH_DB;
     const [a, b] = await Promise.all([applyMigrations(db), applyMigrations(db)]);
-    expect([...a, ...b]).toEqual(["0001_init.sql"]);
+    expect([...a, ...b]).toEqual(MIGRATIONS.map((m) => m.name));
     expect(await applyMigrations(db)).toEqual([]);
     const tables = await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all<{ name: string }>();
     expect(tables.results.map((t) => t.name)).toEqual(
       expect.arrayContaining(["anecdotes", "d1_migrations", "families", "invites", "persons", "sessions", "users"]),
     );
     const rows = await db.prepare("SELECT name FROM d1_migrations").all();
-    expect(rows.results).toHaveLength(1);
+    expect(rows.results).toHaveLength(MIGRATIONS.length);
   });
 });
 

@@ -25,6 +25,16 @@ stories. The Ancestry import, interactive tree and guided narrative come next
   delete their stories, and stories stay on the site if their author leaves.
 - **Admin page.** Create and revoke invites, see who has joined, make other
   admins, remove members.
+- **Import from Ancestry.** Admin → *Import from Ancestry*: choose the `.ged`
+  file exported from Ancestry, check the preview, press Import. The file is
+  read in your browser and sent in small batches. Re-importing an updated
+  export updates people in place (matched by their Ancestry ID); nobody is
+  deleted, so stories stay attached.
+- **Life events.** Each person's page has a timeline of residences (from
+  censuses), arrivals and departures, naturalization, marriages, burials and
+  obituaries. People are searchable by every name they were recorded under.
+- **Who might be living** is estimated on import: no death record, and not known
+  to be born more than 100 years ago. When in doubt, a person counts as living.
 - Large, readable type, works on phones and iPads, and supports dark mode.
 
 ## Run it on your computer
@@ -123,14 +133,14 @@ point-in-time history ("Time Travel").
 
 ## Roadmap
 
-1. **Backbone:** accounts, invites, profiles, people, stories. *(this)*
-2. **Import the Ancestry tree.** On Ancestry: *Trees → (your tree) → Tree
-   Settings → Export tree* to download a `.ged` (GEDCOM) file. An importer will
-   load people and families into D1. Re-importing updates them without
-   duplicates, because each record keeps its GEDCOM ID.
+1. **Backbone:** accounts, invites, profiles, people, stories. *(done)*
+2. **Import the Ancestry tree.** *(done)* On Ancestry: *Trees → (your tree) →
+   Tree Settings → Export tree*, then Admin → *Import from Ancestry*.
 3. **The family document.** Transcribe it, and link passages to the people
    they're about, so quotes can appear on their pages and in the narrative.
-4. **Interactive tree.** Pan and zoom, starting from *you* ("Margaret is your
+4. **The family map.** A clean, white, zoomable map of everyone, opening on
+   *you*. People nearby are largest; hover or click to bring someone forward,
+   with their photo, years and relationship to you ("your
    great-great-grandmother").
 5. **Guided story.** Chapters that walk through generations, places and
    events, drawing on the document, the tree and members' stories.
@@ -147,6 +157,8 @@ seed/            fictional sample family for local development only
 src/index.tsx    app setup: security headers, CSRF, sessions, routes
 src/auth.ts      sessions, one-time links, sign-in middleware
 src/migrate.ts   applies migrations/ to the database on the first request
+src/importer.ts  validates and saves people/families from an Ancestry import
+public/gedcom.js reads GEDCOM files (runs in the admin's browser)
 src/routes/      sign-in/join flow; people, stories, profiles, admin
 src/views/       server-rendered pages (Hono JSX)
 src/db.ts        queries

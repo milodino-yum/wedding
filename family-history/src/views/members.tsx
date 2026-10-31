@@ -207,6 +207,16 @@ export function AdminPage(props: {
       <h1>Admin</h1>
 
       <section class="card">
+        <h2>The family tree</h2>
+        <p>
+          Bring in the tree from Ancestry, or update it after you've made changes there.{" "}
+          <a class="button" href="/admin/import">
+            Import from Ancestry
+          </a>
+        </p>
+      </section>
+
+      <section class="card">
         <h2>Invite relatives</h2>
         <p>
           Make a personal invite for each person (one use), or one shared invite for a group, like a code printed in the

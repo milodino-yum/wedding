@@ -5,6 +5,7 @@ import {
   anecdotesByAuthor,
   anecdotesForPerson,
   counts,
+  eventsForPerson,
   getPerson,
   getRelatives,
   getUser,
@@ -18,6 +19,8 @@ import { DAY, field, newId, newInviteCode, now } from "../lib/util";
 import { render } from "../views/layout";
 import { EditAnecdote, PersonPage, PeopleList } from "../views/people";
 import { AdminPage, EditProfile, FamilyDirectory, Home, MemberProfile } from "../views/members";
+import { ImportPage } from "../views/import";
+import { finishImport, ImportError, saveFamilies, savePeople, validateFamilies, validatePeople } from "../importer";
 
 export const appRoutes = new Hono<AppEnv>();
 
@@ -65,15 +68,16 @@ appRoutes.get("/people", async (c) => {
 async function personPage(c: Ctx, personId: string, opts: { error?: string; draft?: { body: string | null; heard_from: string | null } } = {}) {
   const person = await getPerson(c.env.DB, personId);
   if (!person) return notFound(c, "person");
-  const [relatives, anecdotes, claimedBy] = await Promise.all([
+  const [relatives, anecdotes, events, claimedBy] = await Promise.all([
     getRelatives(c.env.DB, person.id),
     anecdotesForPerson(c.env.DB, person.id),
+    eventsForPerson(c.env.DB, person.id),
     c.env.DB.prepare("SELECT id, display_name FROM users WHERE person_id = ?").bind(person.id).first<{ id: string; display_name: string }>(),
   ]);
   return render(
     c,
     personName(person),
-    <PersonPage person={person} relatives={relatives} anecdotes={anecdotes} viewer={me(c)} claimedBy={claimedBy} {...opts} />,
+    <PersonPage person={person} relatives={relatives} anecdotes={anecdotes} events={events} viewer={me(c)} claimedBy={claimedBy} {...opts} />,
     opts.error ? 400 : 200,
   );
 }
@@ -273,3 +277,33 @@ appRoutes.post("/admin/members/:id/remove", async (c) => {
   return c.redirect("/admin?notice=member-removed");
 });
 
+// --- Import from Ancestry -----------------------------------------------------------
+
+appRoutes.get("/admin/import", async (c) => {
+  const imports = await c.env.DB.prepare(
+    `SELECT i.*, u.display_name AS by_name FROM imports i
+       LEFT JOIN users u ON u.id = i.created_by ORDER BY i.created_at DESC LIMIT 10`,
+  ).all<{ id: string; file_name: string | null; people: number; families: number; missing: number; by_name: string | null; created_at: number }>();
+  return render(c, "Import from Ancestry", <ImportPage imports={imports.results} />);
+});
+
+// The browser parses the file and sends it in batches as JSON.
+async function importStep(c: Ctx, step: (body: unknown) => Promise<object>) {
+  if (!c.req.header("Content-Type")?.startsWith("application/json")) return c.json({ error: "Expected JSON" }, 415);
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "That wasn't valid JSON" }, 400);
+  }
+  try {
+    return c.json({ ok: true, ...(await step(body)) });
+  } catch (err) {
+    if (err instanceof ImportError) return c.json({ error: err.message }, 400);
+    throw err;
+  }
+}
+
+appRoutes.post("/admin/import/people", (c) => importStep(c, (b) => savePeople(c.env.DB, validatePeople(b))));
+appRoutes.post("/admin/import/families", (c) => importStep(c, (b) => saveFamilies(c.env.DB, validateFamilies(b))));
+appRoutes.post("/admin/import/finish", (c) => importStep(c, (b) => finishImport(c.env.DB, b, me(c).id)));

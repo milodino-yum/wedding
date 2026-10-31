@@ -6,12 +6,16 @@
 // (`npm run db:migrate:local`, `wrangler d1 migrations list`) keep working.
 
 import m0001 from "../migrations/0001_init.sql";
+import m0002 from "../migrations/0002_events_and_imports.sql";
 
 /**
  * Every file in migrations/, in order. When you add a migration file, add it
  * here too; a test fails if this list and the folder disagree.
  */
-export const MIGRATIONS: { name: string; sql: string }[] = [{ name: "0001_init.sql", sql: m0001 }];
+export const MIGRATIONS: { name: string; sql: string }[] = [
+  { name: "0001_init.sql", sql: m0001 },
+  { name: "0002_events_and_imports.sql", sql: m0002 },
+];
 
 const CREATE_TABLE = `CREATE TABLE IF NOT EXISTS d1_migrations(
   id         INTEGER PRIMARY KEY AUTOINCREMENT,

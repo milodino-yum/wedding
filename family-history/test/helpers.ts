@@ -24,6 +24,10 @@ export class Browser {
     return res;
   }
 
+  postJson(path: string, data: unknown) {
+    return this.fetch(path, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } });
+  }
+
   post(path: string, data: Record<string, string>, headers: Record<string, string> = {}) {
     return this.fetch(path, {
       method: "POST",

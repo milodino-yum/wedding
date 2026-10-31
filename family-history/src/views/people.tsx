@@ -1,4 +1,4 @@
-import type { Person, User } from "../types";
+import type { LifeEvent, Person, User } from "../types";
 import type { AnecdoteWithAuthor, Relatives } from "../db";
 import { lifeSpan, personName, prettyDate } from "../db";
 import { formatDate } from "../lib/util";
@@ -131,7 +131,7 @@ export function StoryFields(props: { firstName: string; body?: string | null; he
         rows={6}
         required
         maxlength={10000}
-        placeholder={`e.g. "My mom always told me that ${props.firstName} was an avid knitter, and every grandchild got a sweater for Christmas."`}
+        placeholder={`e.g. "My mom always told me that ${props.firstName}…"`}
       >
         {props.body ?? ""}
       </textarea>
@@ -148,10 +148,37 @@ export function StoryFields(props: { firstName: string; body?: string | null; he
   );
 }
 
+// Born and died are already at the top of the page.
+const TIMELINE_SKIP = new Set(["BIRT", "DEAT"]);
+
+function Timeline(props: { events: LifeEvent[] }) {
+  const events = props.events.filter((e) => !TIMELINE_SKIP.has(e.kind));
+  if (!events.length) return null;
+  return (
+    <section class="timeline-section" aria-labelledby="timeline-h">
+      <h2 id="timeline-h">Life events</h2>
+      <ol class="timeline">
+        {events.map((e) => (
+          <li>
+            <span class="timeline-when">{e.year ?? ""}</span>
+            <span class="timeline-what">
+              <strong>{e.label}</strong>
+              {e.place && <> {e.kind === "RESI" ? "" : "· "}{e.place}</>}
+              {e.date && String(e.year) !== e.date.trim() && <span class="muted small"> ({prettyDate(e.date, { capitalize: false })})</span>}
+              {e.details && <span class="timeline-details">{e.details}</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 export function PersonPage(props: {
   person: Person;
   relatives: Relatives;
   anecdotes: AnecdoteWithAuthor[];
+  events: LifeEvent[];
   viewer: User;
   claimedBy: { id: string; display_name: string } | null;
   error?: string;
@@ -169,6 +196,7 @@ export function PersonPage(props: {
       <header class="person-header">
         <h1>{personName(p)}</h1>
         {p.nickname && <p class="nickname">Known as "{p.nickname}"</p>}
+        {p.alt_names && <p class="muted small">Also recorded as {p.alt_names.split("\n").join(", ")}</p>}
         {span && <p class="lifespan">{span}</p>}
         {props.claimedBy && (
           <p class="muted">
@@ -186,6 +214,7 @@ export function PersonPage(props: {
             </dl>
           )}
           <Prose text={p.summary} />
+          <Timeline events={props.events} />
 
           <section class="stories" aria-labelledby="stories-h">
             <h2 id="stories-h">Stories and memories</h2>

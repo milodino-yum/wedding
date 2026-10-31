@@ -1,4 +1,4 @@
-import type { Anecdote, Invite, Person, User } from "./types";
+import type { Anecdote, Invite, LifeEvent, Person, User } from "./types";
 
 export type AnecdoteWithAuthor = Anecdote & { author_name: string | null };
 export type AnecdoteWithPerson = AnecdoteWithAuthor & {
@@ -7,8 +7,8 @@ export type AnecdoteWithPerson = AnecdoteWithAuthor & {
   nickname: string | null;
 };
 
-export function personName(p: Pick<Person, "given_names" | "surname">): string {
-  return [p.given_names, p.surname].filter(Boolean).join(" ") || "Unknown";
+export function personName(p: Pick<Person, "given_names" | "surname"> & { suffix?: string | null }): string {
+  return [p.given_names, p.surname, p.suffix].filter(Boolean).join(" ") || "Unknown";
 }
 
 const GEDCOM_WORDS: Record<string, string> = {
@@ -44,7 +44,7 @@ export async function searchPeople(db: D1Database, q: string | null, limit = 300
         .prepare(
           `SELECT * FROM persons
             WHERE given_names LIKE ?1 ESCAPE '\\' OR surname LIKE ?1 ESCAPE '\\' OR nickname LIKE ?1 ESCAPE '\\'
-               OR (given_names || ' ' || surname) LIKE ?1 ESCAPE '\\'
+               OR (given_names || ' ' || surname) LIKE ?1 ESCAPE '\\' OR alt_names LIKE ?1 ESCAPE '\\'
             ORDER BY surname COLLATE NOCASE, given_names COLLATE NOCASE LIMIT ?2`,
         )
         .bind(like, limit)
@@ -129,6 +129,19 @@ export async function getRelatives(db: D1Database, personId: string): Promise<Re
       children: childRows.filter((ch) => ch.family_id === u.family_id),
     })),
   };
+}
+
+export async function eventsForPerson(db: D1Database, personId: string) {
+  return (
+    await db
+      .prepare(
+        `SELECT * FROM events WHERE person_id = ?
+          ORDER BY kind = 'BIRT' DESC, kind IN ('DEAT', 'BURI', 'CREM', 'PROB', 'WILL'),
+                   year IS NULL, year, sort_order`,
+      )
+      .bind(personId)
+      .all<LifeEvent>()
+  ).results;
 }
 
 export async function anecdotesForPerson(db: D1Database, personId: string) {
