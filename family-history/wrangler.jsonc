@@ -16,8 +16,8 @@
     {
       "binding": "DB",
       "database_name": "clandestiny",
-      // The ID of the D1 database created in the Cloudflare dashboard.
-      // "database_id": "00000000-0000-0000-0000-000000000000",
+      // The D1 database created in the Cloudflare dashboard.
+      "database_id": "e9871af6-12d6-4a3e-a346-329c6a7e204c",
       "migrations_dir": "migrations"
     }
   ],
