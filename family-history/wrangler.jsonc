@@ -21,7 +21,7 @@
 
   "vars": {
     // Shown in the header, page titles and emails.
-    "SITE_NAME": "Our Family Story",
+    "SITE_NAME": "Clan Destiny",
     // Who sign-in emails come from. The domain must be verified in Resend.
     "EMAIL_FROM": "Family History <stories@example.com>"
   }

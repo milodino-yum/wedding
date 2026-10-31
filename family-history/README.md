@@ -1,4 +1,4 @@
-# Our Family Story
+# Clan Destiny
 
 A private, invite-only website where the family can explore our history, and
 everyone can add the stories only they know ("My mom always told me that
@@ -75,7 +75,7 @@ go to sleep when nobody has visited for a while. Sign-in email goes through
    npx wrangler secret put ADMIN_EMAILS      # your email address
    npx wrangler secret put RESEND_API_KEY    # from resend.com → API Keys
    ```
-6. **Set the name** in `wrangler.jsonc` (`SITE_NAME`), then deploy:
+6. **Check the name** in `wrangler.jsonc` (`SITE_NAME`, currently "Clan Destiny"), then deploy:
    ```bash
    npm run deploy
    ```
