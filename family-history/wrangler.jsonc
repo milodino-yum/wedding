@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "family-history",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+
+  // CSS, icons and other public files. Served without sign-in, so never put
+  // family data or photos here (those will live in R2 behind the login).
+  "assets": { "directory": "./public" },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "family-history",
+      // Run `npx wrangler d1 create family-history` once and paste the ID here.
+      // "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    // Shown in the header, page titles and emails.
+    "SITE_NAME": "Our Family Story",
+    // Who sign-in emails come from. The domain must be verified in Resend.
+    "EMAIL_FROM": "Family History <stories@example.com>"
+  }
+
+  // Set these as secrets, not here (this repository is public):
+  //   npx wrangler secret put ADMIN_EMAILS     comma-separated; can sign in without
+  //                                            an invite and become admins
+  //   npx wrangler secret put RESEND_API_KEY   for sending sign-in emails
+}

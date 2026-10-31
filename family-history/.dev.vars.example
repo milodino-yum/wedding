@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local development (never commit .dev.vars).
+# DEV_MODE shows the sign-in link on screen instead of needing real email.
+DEV_MODE=true
+ADMIN_EMAILS=you@example.com
+# RESEND_API_KEY=re_...   # uncomment to send real email while developing
